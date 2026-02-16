@@ -71,7 +71,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/shuffle"
             android:src="@drawable/ic_shuffle"
-            app:tint="@color/on_surface" />
+            app:tint="@color/on_background" />
 
         <!-- Previous Button -->
         <ImageButton
@@ -129,7 +129,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/repeat"
             android:src="@drawable/ic_repeat"
-            app:tint="@color/on_surface" />
+            app:tint="@color/on_background" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
