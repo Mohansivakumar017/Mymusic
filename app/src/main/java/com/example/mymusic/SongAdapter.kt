@@ -3,6 +3,8 @@ package com.example.mymusic
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.mymusic.databinding.ItemSongBinding
 
 class SongAdapter(
@@ -21,6 +23,14 @@ class SongAdapter(
         val song = songs[position]
         holder.binding.textTitle.text = song.title
         holder.binding.textDuration.text = formatDuration(song.duration)
+        
+        holder.binding.imgAlbumArt.load(song.getAlbumArtUri()) {
+            crossfade(true)
+            placeholder(R.drawable.ic_music_note)
+            error(R.drawable.ic_music_note)
+            transformations(RoundedCornersTransformation(12f))
+        }
+
         holder.itemView.setOnClickListener { onSongClick(position) }
     }
 

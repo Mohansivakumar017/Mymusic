@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
+        android:gravity="center_vertical"
         app:layout_constraintTop_toTopOf="parent">
 
         <Button
@@ -22,6 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Name"
+            android:textAllCaps="false"
             android:textColor="@color/on_background" />
 
         <Button
@@ -31,6 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Date"
+            android:textAllCaps="false"
             android:textColor="@color/on_background" />
 
         <Button
@@ -40,7 +43,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Duration"
+            android:textAllCaps="false"
             android:textColor="@color/on_background" />
+
+        <ImageButton
+            android:id="@+id/btn_shuffle_main"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Shuffle Play"
+            android:src="@drawable/ic_shuffle"
+            app:tint="@color/primary" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -61,7 +74,10 @@
             android:id="@+id/player_control_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:show_timeout="0" />
+            app:show_timeout="0"
+            app:show_next_button="true"
+            app:show_previous_button="true"
+            app:show_shuffle_button="true" />
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

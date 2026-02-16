@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -22,7 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var player: ExoPlayer
     private val songs = mutableListOf<Song>()
-    private var shuffleQueue = mutableListOf<Int>()
     private lateinit var adapter: SongAdapter
 
     private val requestPermissionLauncher =
@@ -40,11 +40,22 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        player = ExoPlayer.Builder(this).build()
-        binding.playerControlView.player = player
+        try {
+            player = ExoPlayer.Builder(this).build()
+            binding.playerControlView.player = player
+            
+            player.addListener(object : Player.Listener {
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    super.onMediaItemTransition(mediaItem, reason)
+                    // You could update UI here to highlight the playing song in the list
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error initializing player", e)
+        }
 
         setupRecyclerView()
-        setupSortButtons()
+        setupButtons()
         checkPermissionAndLoad()
     }
 
@@ -56,24 +67,32 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.adapter = adapter
     }
 
-    private fun setupSortButtons() {
+    private fun setupButtons() {
         binding.btnSortName.setOnClickListener {
             songs.sortBy { it.title.lowercase() }
-            onDataSorted()
+            onDataChanged()
         }
         binding.btnSortDate.setOnClickListener {
             songs.sortByDescending { it.dateAdded }
-            onDataSorted()
+            onDataChanged()
         }
         binding.btnSortDuration.setOnClickListener {
             songs.sortByDescending { it.duration }
-            onDataSorted()
+            onDataChanged()
+        }
+        binding.btnShuffleMain.setOnClickListener {
+            if (songs.isNotEmpty()) {
+                player.shuffleModeEnabled = true
+                val randomIndex = (0 until songs.size).random()
+                playSongAt(randomIndex)
+                Toast.makeText(this, "Shuffle Mode On", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    private fun onDataSorted() {
+    private fun onDataChanged() {
         adapter.notifyDataSetChanged()
-        initShuffle()
+        updatePlayerPlaylist()
     }
 
     private fun checkPermissionAndLoad() {
@@ -98,7 +117,7 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             songs.sortBy { it.title.lowercase() } // Default sort
             adapter.notifyDataSetChanged()
-            initShuffle()
+            updatePlayerPlaylist()
         } else {
             Toast.makeText(this, "No songs found", Toast.LENGTH_SHORT).show()
         }
@@ -112,57 +131,61 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.DATE_ADDED
+            MediaStore.Audio.Media.DATE_ADDED,
+            MediaStore.Audio.Media.ALBUM_ID
         )
-        val cursor = contentResolver.query(uri, projection, null, null, null)
+        
+        try {
+            val cursor = contentResolver.query(uri, projection, null, null, null)
 
-        cursor?.use {
-            while (it.moveToNext()) {
-                val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
-                val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE))
-                val path = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
-                val duration = it.getLong(it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION))
-                val dateAdded = it.getLong(it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED))
+            cursor?.use {
+                val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val titleColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+                val dataColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                val dateAddedColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
+                val albumIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
 
-                songs.add(Song(id, title, path, duration, dateAdded))
+                while (it.moveToNext()) {
+                    val id = it.getLong(idColumn)
+                    val title = it.getString(titleColumn) ?: "Unknown"
+                    val path = it.getString(dataColumn) ?: ""
+                    val duration = it.getLong(durationColumn)
+                    val dateAdded = it.getLong(dateAddedColumn)
+                    val albumId = it.getLong(albumIdColumn)
+
+                    if (path.isNotEmpty()) {
+                        songs.add(Song(id, title, path, duration, dateAdded, albumId))
+                    }
+                }
             }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error loading songs", e)
         }
     }
 
-    private fun initShuffle() {
-        shuffleQueue = songs.indices.shuffled().toMutableList()
-    }
-
-    private fun playNext() {
-        if (songs.isEmpty()) return
-
-        if (shuffleQueue.isEmpty()) {
-            shuffleQueue = songs.indices.shuffled().toMutableList()
-        }
-
-        val index = shuffleQueue.removeAt(0)
-        playSongAt(index)
+    private fun updatePlayerPlaylist() {
+        val mediaItems = songs.map { MediaItem.fromUri(it.path) }
+        player.setMediaItems(mediaItems)
+        player.prepare()
     }
 
     private fun playSongAt(index: Int) {
-        val song = songs[index]
-        val mediaItem = MediaItem.fromUri(song.path)
-        player.setMediaItem(mediaItem)
-        player.prepare()
-        player.play()
-
-        player.removeListener(playbackListener)
-        player.addListener(playbackListener)
-    }
-
-    private val playbackListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(state: Int) {
-            if (state == Player.STATE_ENDED) playNext()
+        if (index !in songs.indices) return
+        
+        try {
+            player.seekTo(index, 0)
+            player.play()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error playing song", e)
+            Toast.makeText(this, "Error playing song", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        player.release()
+        if (::player.isInitialized) {
+            player.release()
+        }
     }
 }
