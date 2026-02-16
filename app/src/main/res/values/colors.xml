@@ -27,4 +27,9 @@
     <!-- Common Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- PR #2 Additions -->
+    <color name="primary_light">#4CAF50</color>
+    <color name="surface_elevated">#2C2C2C</color>
+    <color name="accent">#FF5722</color>
 </resources>
