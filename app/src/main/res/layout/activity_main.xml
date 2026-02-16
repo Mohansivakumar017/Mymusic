@@ -63,11 +63,20 @@
         app:layout_constraintBottom_toTopOf="@id/player_control_container"
         app:layout_constraintTop_toBottomOf="@id/sort_bar" />
 
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/on_surface"
+        android:alpha="0.1"
+        app:layout_constraintBottom_toTopOf="@id/player_control_container" />
+
     <FrameLayout
         android:id="@+id/player_control_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/surface"
+        android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <androidx.media3.ui.PlayerControlView
@@ -75,9 +84,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:show_timeout="0"
-            app:show_next_button="true"
-            app:show_previous_button="true"
-            app:show_shuffle_button="true" />
+            app:controller_layout_id="@layout/custom_player_control" />
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
