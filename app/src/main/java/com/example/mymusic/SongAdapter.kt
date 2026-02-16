@@ -25,10 +25,12 @@ class SongAdapter(
         val colors = ThemeHelper.getThemeColors(theme)
         
         holder.binding.textTitle.text = song.title
+        holder.binding.textArtist.text = song.artist
         holder.binding.textDuration.text = formatDuration(song.duration)
         
         // Apply theme colors
         holder.binding.textTitle.setTextColor(colors.onBackground)
+        holder.binding.textArtist.setTextColor(colors.onSurface)
         holder.binding.textDuration.setTextColor(colors.onSurface)
         holder.binding.root.setCardBackgroundColor(colors.cardBackground)
         

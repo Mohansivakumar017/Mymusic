@@ -27,9 +27,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var player: ExoPlayer
     private val songs = mutableListOf<Song>()
+    private val filteredSongs = mutableListOf<Song>()
     private lateinit var adapter: SongAdapter
     private lateinit var themeManager: ThemeManager
     private var currentTheme: ThemeType = ThemeType.SPOTIFY
+    private var isSearching = false
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -77,7 +79,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = SongAdapter(songs) { position ->
+        filteredSongs.addAll(songs)
+        adapter = SongAdapter(filteredSongs, currentTheme) { position ->
             playSongAt(position)
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
@@ -108,6 +111,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDataChanged() {
+        if (isSearching) {
+            // Don't update playlist when searching, keep the filtered view
+        } else {
+            filteredSongs.clear()
+            filteredSongs.addAll(songs)
+        }
         adapter.notifyDataSetChanged()
         updatePlayerPlaylist()
     }
@@ -133,6 +142,8 @@ class MainActivity : AppCompatActivity() {
         loadSongs()
         if (songs.isNotEmpty()) {
             songs.sortBy { it.title.lowercase() } // Default sort
+            filteredSongs.clear()
+            filteredSongs.addAll(songs)
             adapter.notifyDataSetChanged()
             updatePlayerPlaylist()
         } else {
@@ -149,7 +160,9 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DATE_ADDED,
-            MediaStore.Audio.Media.ALBUM_ID
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM
         )
         
         try {
@@ -162,6 +175,8 @@ class MainActivity : AppCompatActivity() {
                 val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
                 val dateAddedColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
                 val albumIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+                val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+                val albumColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
 
                 while (it.moveToNext()) {
                     val id = it.getLong(idColumn)
@@ -170,9 +185,11 @@ class MainActivity : AppCompatActivity() {
                     val duration = it.getLong(durationColumn)
                     val dateAdded = it.getLong(dateAddedColumn)
                     val albumId = it.getLong(albumIdColumn)
+                    val artist = it.getString(artistColumn) ?: "Unknown Artist"
+                    val album = it.getString(albumColumn) ?: "Unknown Album"
 
                     if (path.isNotEmpty()) {
-                        songs.add(Song(id, title, path, duration, dateAdded, albumId))
+                        songs.add(Song(id, title, path, duration, dateAdded, albumId, artist, album))
                     }
                 }
             }
@@ -188,10 +205,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playSongAt(index: Int) {
-        if (index !in songs.indices) return
+        if (index !in filteredSongs.indices) return
+        
+        // Find the song in the main songs list to get the correct player index
+        val song = filteredSongs[index]
+        val actualIndex = songs.indexOf(song)
+        
+        if (actualIndex == -1) return
         
         try {
-            player.seekTo(index, 0)
+            player.seekTo(actualIndex, 0)
             player.play()
         } catch (e: Exception) {
             Log.e("MainActivity", "Error playing song", e)
@@ -236,7 +259,7 @@ class MainActivity : AppCompatActivity() {
         
         // Recreate adapter to apply theme to items
         if (::adapter.isInitialized) {
-            adapter = SongAdapter(songs, currentTheme) { position ->
+            adapter = SongAdapter(filteredSongs, currentTheme) { position ->
                 playSongAt(position)
             }
             binding.recyclerView.adapter = adapter
@@ -256,11 +279,65 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_search -> {
-                Toast.makeText(this, "Search feature coming soon!", Toast.LENGTH_SHORT).show()
+                showSearchDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+    
+    private fun showSearchDialog() {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Search Songs")
+        
+        val input = android.widget.EditText(this)
+        input.hint = "Enter song, artist, or album name"
+        input.setPadding(50, 20, 50, 20)
+        builder.setView(input)
+        
+        builder.setPositiveButton("Search") { _, _ ->
+            val query = input.text.toString()
+            filterSongs(query)
+        }
+        
+        builder.setNegativeButton("Clear") { _, _ ->
+            clearFilter()
+        }
+        
+        builder.setNeutralButton("Cancel") { dialog, _ ->
+            dialog.cancel()
+        }
+        
+        builder.show()
+    }
+    
+    private fun filterSongs(query: String) {
+        if (query.isEmpty()) {
+            clearFilter()
+            return
+        }
+        
+        isSearching = true
+        filteredSongs.clear()
+        
+        songs.forEach { song ->
+            if (song.title.contains(query, ignoreCase = true) ||
+                song.artist.contains(query, ignoreCase = true) ||
+                song.album.contains(query, ignoreCase = true)) {
+                filteredSongs.add(song)
+            }
+        }
+        
+        adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Found ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun clearFilter() {
+        isSearching = false
+        filteredSongs.clear()
+        filteredSongs.addAll(songs)
+        adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
     }
     
     @Deprecated("Deprecated in Java")
