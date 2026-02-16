@@ -18,6 +18,10 @@ class SongAdapter(
     }
     
     private var currentPlayingPosition = -1
+    
+    companion object {
+        private const val CLICK_ANIMATION_DURATION = 150L
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
         val binding = ItemSongBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -67,7 +71,7 @@ class SongAdapter(
                 }
                 holder.clickCallback = null
             }
-            holder.itemView.postDelayed(holder.clickCallback!!, 150)
+            holder.itemView.postDelayed(holder.clickCallback!!, CLICK_ANIMATION_DURATION)
         }
     }
     
