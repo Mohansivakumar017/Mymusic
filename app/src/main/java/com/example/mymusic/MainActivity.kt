@@ -47,7 +47,8 @@ class MainActivity : AppCompatActivity() {
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
-                    // You could update UI here to highlight the playing song in the list
+                    // Update the playing indicator in the list
+                    adapter.setCurrentPlayingPosition(player.currentMediaItemIndex)
                 }
             })
         } catch (e: Exception) {
@@ -82,6 +83,10 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnShuffleMain.setOnClickListener {
             if (songs.isNotEmpty()) {
+                // Add rotation animation to shuffle button
+                val rotateAnimation = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.rotate_360)
+                binding.btnShuffleMain.startAnimation(rotateAnimation)
+                
                 player.shuffleModeEnabled = true
                 val randomIndex = (0 until songs.size).random()
                 playSongAt(randomIndex)
@@ -176,6 +181,7 @@ class MainActivity : AppCompatActivity() {
         try {
             player.seekTo(index, 0)
             player.play()
+            adapter.setCurrentPlayingPosition(index)
         } catch (e: Exception) {
             Log.e("MainActivity", "Error playing song", e)
             Toast.makeText(this, "Error playing song", Toast.LENGTH_SHORT).show()
