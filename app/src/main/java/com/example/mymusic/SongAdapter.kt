@@ -13,7 +13,9 @@ class SongAdapter(
     private val onSongClick: (Int) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
-    class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root)
+    class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root) {
+        var clickCallback: Runnable? = null
+    }
     
     private var currentPlayingPosition = -1
 
@@ -27,6 +29,10 @@ class SongAdapter(
         holder.binding.textTitle.text = song.title
         holder.binding.textDuration.text = formatDuration(song.duration)
         
+        // Cancel any pending click callbacks from recycled view
+        holder.clickCallback?.let { holder.itemView.removeCallbacks(it) }
+        holder.clickCallback = null
+        
         holder.binding.imgAlbumArt.load(song.getAlbumArtUri()) {
             crossfade(true)
             placeholder(R.drawable.ic_music_note)
@@ -37,29 +43,39 @@ class SongAdapter(
         // Show playing indicator with pulse animation if this is the current song
         if (position == currentPlayingPosition) {
             holder.binding.imgPlayingIndicator.visibility = android.view.View.VISIBLE
-            val pulseAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.pulse)
-            holder.binding.imgPlayingIndicator.startAnimation(pulseAnimation)
+            if (holder.binding.imgPlayingIndicator.animation == null) {
+                val pulseAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.pulse)
+                holder.binding.imgPlayingIndicator.startAnimation(pulseAnimation)
+            }
         } else {
             holder.binding.imgPlayingIndicator.visibility = android.view.View.GONE
             holder.binding.imgPlayingIndicator.clearAnimation()
         }
-
-        // Add fade-in animation for items
-        val fadeInAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.item_fade_in)
-        holder.itemView.startAnimation(fadeInAnimation)
         
         // Add click animation with scale effect
         holder.itemView.setOnClickListener {
             val pressAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.item_press)
             holder.itemView.startAnimation(pressAnimation)
             
-            // Delay to show the press animation before triggering click
-            holder.itemView.postDelayed({
-                val releaseAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.item_release)
-                holder.itemView.startAnimation(releaseAnimation)
-                onSongClick(position)
-            }, 150)
+            // Store callback so it can be canceled if view is recycled
+            val clickPosition = holder.bindingAdapterPosition
+            holder.clickCallback = Runnable {
+                if (clickPosition != RecyclerView.NO_POSITION && clickPosition == holder.bindingAdapterPosition) {
+                    val releaseAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.item_release)
+                    holder.itemView.startAnimation(releaseAnimation)
+                    onSongClick(clickPosition)
+                }
+                holder.clickCallback = null
+            }
+            holder.itemView.postDelayed(holder.clickCallback!!, 150)
         }
+    }
+    
+    override fun onViewRecycled(holder: SongViewHolder) {
+        super.onViewRecycled(holder)
+        // Clean up pending callbacks when view is recycled
+        holder.clickCallback?.let { holder.itemView.removeCallbacks(it) }
+        holder.clickCallback = null
     }
 
     override fun getItemCount() = songs.size
