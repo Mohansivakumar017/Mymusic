@@ -41,6 +41,15 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
             }
         }
+    
+    private val themeSelectionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                // Theme was changed, recreate activity
+                currentTheme = themeManager.getTheme()
+                recreate()
+            }
+        }
 
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -275,7 +284,7 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_themes -> {
                 val intent = Intent(this, ThemeSelectionActivity::class.java)
-                startActivityForResult(intent, REQUEST_THEME_CHANGE)
+                themeSelectionLauncher.launch(intent)
                 true
             }
             R.id.action_search -> {
@@ -338,19 +347,5 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.addAll(songs)
         adapter.notifyDataSetChanged()
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
-    }
-    
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_THEME_CHANGE && resultCode == RESULT_OK) {
-            // Theme was changed, recreate activity
-            currentTheme = themeManager.getTheme()
-            recreate()
-        }
-    }
-    
-    companion object {
-        private const val REQUEST_THEME_CHANGE = 1001
     }
 }
