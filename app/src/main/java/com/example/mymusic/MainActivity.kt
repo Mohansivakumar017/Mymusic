@@ -1,11 +1,15 @@
 package com.example.mymusic
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -24,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var player: ExoPlayer
     private val songs = mutableListOf<Song>()
     private lateinit var adapter: SongAdapter
+    private lateinit var themeManager: ThemeManager
+    private var currentTheme: ThemeType = ThemeType.SPOTIFY
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -37,8 +43,19 @@ class MainActivity : AppCompatActivity() {
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize theme manager
+        themeManager = ThemeManager(this)
+        currentTheme = themeManager.getTheme()
+        
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // Setup toolbar
+        setSupportActionBar(binding.toolbar)
+        
+        // Apply theme
+        applyTheme()
 
         try {
             player = ExoPlayer.Builder(this).build()
@@ -187,5 +204,76 @@ class MainActivity : AppCompatActivity() {
         if (::player.isInitialized) {
             player.release()
         }
+    }
+    
+    private fun applyTheme() {
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        
+        // Apply background colors
+        binding.root.setBackgroundColor(colors.background)
+        binding.toolbar.setBackgroundColor(colors.surface)
+        binding.toolbar.setTitleTextColor(colors.onBackground)
+        binding.sortBar.setBackgroundColor(colors.surface)
+        binding.playerControlContainer.setBackgroundColor(colors.surface)
+        
+        // Apply status bar color
+        window.statusBarColor = colors.primaryDark
+        
+        // Apply gradient if needed
+        if (colors.useGradient && colors.gradientStart != null && colors.gradientEnd != null) {
+            val gradientDrawable = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(colors.gradientStart, colors.gradientEnd)
+            )
+            binding.root.background = gradientDrawable
+        }
+        
+        // Update button colors
+        binding.btnSortName.setTextColor(colors.onBackground)
+        binding.btnSortDate.setTextColor(colors.onBackground)
+        binding.btnSortDuration.setTextColor(colors.onBackground)
+        binding.btnShuffleMain.setColorFilter(colors.primary)
+        
+        // Recreate adapter to apply theme to items
+        if (::adapter.isInitialized) {
+            adapter = SongAdapter(songs, currentTheme) { position ->
+                playSongAt(position)
+            }
+            binding.recyclerView.adapter = adapter
+        }
+    }
+    
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_themes -> {
+                val intent = Intent(this, ThemeSelectionActivity::class.java)
+                startActivityForResult(intent, REQUEST_THEME_CHANGE)
+                true
+            }
+            R.id.action_search -> {
+                Toast.makeText(this, "Search feature coming soon!", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+    
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_THEME_CHANGE && resultCode == RESULT_OK) {
+            // Theme was changed, recreate activity
+            currentTheme = themeManager.getTheme()
+            recreate()
+        }
+    }
+    
+    companion object {
+        private const val REQUEST_THEME_CHANGE = 1001
     }
 }
