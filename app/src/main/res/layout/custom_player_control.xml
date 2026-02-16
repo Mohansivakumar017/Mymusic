@@ -146,6 +146,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Repeat"
             android:padding="12dp"
+            android:src="@drawable/ic_repeat"
             android:visibility="gone"
             app:tint="@color/on_surface" />
     </LinearLayout>
