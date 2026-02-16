@@ -120,9 +120,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDataChanged() {
-        if (isSearching) {
-            // Don't update playlist when searching, keep the filtered view
-        } else {
+        if (!isSearching) {
             filteredSongs.clear()
             filteredSongs.addAll(songs)
         }
@@ -301,7 +299,9 @@ class MainActivity : AppCompatActivity() {
         
         val input = android.widget.EditText(this)
         input.hint = "Enter song, artist, or album name"
-        input.setPadding(50, 20, 50, 20)
+        val paddingHorizontal = resources.getDimensionPixelSize(R.dimen.search_input_padding_horizontal)
+        val paddingVertical = resources.getDimensionPixelSize(R.dimen.search_input_padding_vertical)
+        input.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
         builder.setView(input)
         
         builder.setPositiveButton("Search") { _, _ ->
