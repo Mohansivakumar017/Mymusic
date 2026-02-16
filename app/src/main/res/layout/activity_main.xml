@@ -24,7 +24,9 @@
             android:layout_weight="1"
             android:text="Name"
             android:textAllCaps="false"
-            android:textColor="@color/on_background" />
+            android:textColor="@color/on_background"
+            android:drawableTop="@drawable/ic_sort_alphabetical"
+            android:drawablePadding="4dp" />
 
         <Button
             android:id="@+id/btn_sort_date"
@@ -34,7 +36,9 @@
             android:layout_weight="1"
             android:text="Date"
             android:textAllCaps="false"
-            android:textColor="@color/on_background" />
+            android:textColor="@color/on_background"
+            android:drawableTop="@drawable/ic_sort_calendar"
+            android:drawablePadding="4dp" />
 
         <Button
             android:id="@+id/btn_sort_duration"
@@ -44,7 +48,9 @@
             android:layout_weight="1"
             android:text="Duration"
             android:textAllCaps="false"
-            android:textColor="@color/on_background" />
+            android:textColor="@color/on_background"
+            android:drawableTop="@drawable/ic_sort_clock"
+            android:drawablePadding="4dp" />
 
         <ImageButton
             android:id="@+id/btn_shuffle_main"
