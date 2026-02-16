@@ -84,6 +84,15 @@
         app:layout_constraintBottom_toTopOf="@id/player_control_container"
         app:layout_constraintTop_toBottomOf="@id/sort_bar" />
 
+    <!-- Divider above player -->
+    <View
+        android:id="@+id/player_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/on_surface"
+        android:alpha="0.12"
+        app:layout_constraintBottom_toTopOf="@id/player_control_container" />
+
     <FrameLayout
         android:id="@+id/player_control_container"
         android:layout_width="match_parent"
@@ -97,6 +106,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="8dp"
+            app:controller_layout_id="@layout/custom_player_control"
             app:show_timeout="0"
             app:show_next_button="true"
             app:show_previous_button="true"
