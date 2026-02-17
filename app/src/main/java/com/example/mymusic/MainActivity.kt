@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         
         // Initialize ViewBinding for now playing screen and mini player
-        nowPlayingBinding = ViewNowPlayingBinding.bind(binding.nowPlayingContainer)
+        nowPlayingBinding = binding.nowPlayingContainer
         val miniPlayerView = binding.miniPlayerContainer.findViewById<View>(R.id.mini_player_root)
         miniPlayerBinding = ViewMiniPlayerBinding.bind(miniPlayerView)
         
@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupNowPlayingUI() {
         // Setup bottom sheet behavior
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.nowPlayingContainer)
+        bottomSheetBehavior = BottomSheetBehavior.from(nowPlayingBinding.root)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.isHideable = true
         
