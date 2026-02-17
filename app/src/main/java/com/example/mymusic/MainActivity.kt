@@ -160,7 +160,7 @@ class MainActivity : AppCompatActivity() {
                 player.shuffleModeEnabled = !player.shuffleModeEnabled
                 
                 // If no song is playing, start from first song
-                if (player.currentMediaItemIndex == -1) {
+                if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
                     player.seekTo(0, 0)
                     player.play()
                 }
@@ -413,11 +413,11 @@ class MainActivity : AppCompatActivity() {
         // Bottom sheet callback
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                // Don't hide the container, just manage the state
+                // No action needed - bottom sheet visibility is managed by the layout
             }
             
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Optional animations
+                // No animation needed
             }
         })
     }
