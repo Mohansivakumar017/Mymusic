@@ -166,8 +166,11 @@ class MainActivity : AppCompatActivity() {
                     updateNowPlayingUI()
                     
                     // Force refresh notification to ensure lock screen shows correct song info
-                    // This prevents the notification from showing empty content during transitions
-                    notificationHelper?.invalidate()
+                    // Only invalidate if we have valid metadata to prevent showing empty content
+                    if (mediaItem?.mediaMetadata != null && 
+                        !mediaItem.mediaMetadata.title.isNullOrEmpty()) {
+                        notificationHelper?.invalidate()
+                    }
                 }
                 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
