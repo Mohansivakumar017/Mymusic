@@ -165,9 +165,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     updateNowPlayingUI()
                     
-                    // Force refresh notification to ensure lock screen shows correct song info
-                    // mediaItem parameter contains the new media item with its metadata already set
-                    // Only invalidate if we have valid title metadata (artist has fallback in NotificationHelper)
+                    // Force notification refresh when song changes
+                    // This ensures sync between lock screen controls and in-app UI
                     if (!mediaItem?.mediaMetadata?.title.isNullOrEmpty()) {
                         notificationHelper?.invalidate()
                     }
@@ -695,6 +694,15 @@ class MainActivity : AppCompatActivity() {
     private fun updateNowPlayingUI() {
         val song = currentPlayingSong
         if (song != null) {
+            // Update mini player (PlayerControlView)
+            nowPlayingTitle?.text = song.title
+            nowPlayingArtist?.text = song.artist
+            nowPlayingAlbumArt?.load(song.getAlbumArtUri()) {
+                placeholder(R.drawable.ic_music_note)
+                error(R.drawable.ic_music_note)
+                transformations(RoundedCornersTransformation(12f))
+            }
+            
             // Update full player (bottom sheet)
             nowPlayingBinding.fullSongTitle.text = song.title
             nowPlayingBinding.fullSongArtist.text = song.artist
