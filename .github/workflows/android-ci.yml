@@ -45,18 +45,18 @@ jobs:
       
     - name: Upload build reports
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: build-reports
+        name: build-reports-${{ github.job }}
         path: |
           app/build/reports/
           app/build/test-results/
           
     - name: Upload lint reports
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: lint-reports
+        name: lint-reports-${{ github.job }}
         path: app/build/reports/lint-results*.html
 
   test:
@@ -85,9 +85,9 @@ jobs:
       
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: test-results
+        name: test-results-${{ github.job }}
         path: |
           app/build/test-results/
           app/build/reports/tests/
