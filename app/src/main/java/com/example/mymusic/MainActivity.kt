@@ -993,7 +993,7 @@ class MainActivity : AppCompatActivity() {
         playlistNames.add(0, "+ Create New Playlist")
         
         val builder = android.app.AlertDialog.Builder(this)
-        builder.setTitle("Playlists (long-press to delete)")
+        builder.setTitle(getString(R.string.playlists_long_press_hint))
         
         val listView = android.widget.ListView(this)
         val arrayAdapter = android.widget.ArrayAdapter(
@@ -1036,12 +1036,12 @@ class MainActivity : AppCompatActivity() {
     
     private fun showDeletePlaylistConfirmation(playlist: Playlist) {
         val builder = android.app.AlertDialog.Builder(this)
-        builder.setTitle("Delete Playlist")
-        builder.setMessage("Are you sure you want to delete '${playlist.name}'?")
+        builder.setTitle(getString(R.string.delete_playlist))
+        builder.setMessage(getString(R.string.delete_playlist_confirmation, playlist.name))
         
         builder.setPositiveButton("Delete") { dialog, _ ->
             playlistManager.deletePlaylist(playlist.id)
-            Toast.makeText(this, "Playlist deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.playlist_deleted), Toast.LENGTH_SHORT).show()
             
             // If we're currently viewing this playlist, go back to all songs
             if (currentViewMode == ViewMode.PLAYLIST && currentPlaylistId == playlist.id) {
