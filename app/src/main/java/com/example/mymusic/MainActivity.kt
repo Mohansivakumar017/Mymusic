@@ -361,9 +361,3 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
     }
 }
-
-enum class SortMode {
-    BY_NAME,
-    BY_DATE,
-    BY_DURATION
-}
