@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity() {
     // Now Playing UI components
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private var currentSong: Song? = null
+    private val progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private lateinit var progressUpdateRunnable: Runnable
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -261,6 +263,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        progressHandler.removeCallbacks(progressUpdateRunnable)
         if (::player.isInitialized) {
             player.release()
         }
@@ -376,8 +379,7 @@ class MainActivity : AppCompatActivity() {
         val currentTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_current_time)
         val totalTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_total_time)
         
-        val handler = android.os.Handler(mainLooper)
-        val updateRunnable = object : Runnable {
+        progressUpdateRunnable = object : Runnable {
             override fun run() {
                 if (::player.isInitialized) {
                     val position = player.currentPosition
@@ -389,10 +391,10 @@ class MainActivity : AppCompatActivity() {
                     currentTime.text = formatTime(position)
                     totalTime.text = formatTime(duration)
                 }
-                handler.postDelayed(this, 500)
+                progressHandler.postDelayed(this, 500)
             }
         }
-        handler.post(updateRunnable)
+        progressHandler.post(progressUpdateRunnable)
     }
     
     private fun formatTime(millis: Long): String {
