@@ -9,7 +9,7 @@ import org.junit.Assert.*
 class SortModeTest {
     
     @Test
-    fun sortMode_hasThreeValues() {
+    fun sortMode_hasFourValues() {
         val modes = SortMode.values()
         assertEquals(4, modes.size)
     }
