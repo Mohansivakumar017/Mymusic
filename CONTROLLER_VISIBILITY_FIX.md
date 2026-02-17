@@ -22,12 +22,12 @@ Disabled the auto-hide timeout by configuring the `PlayerControlView` to never a
 binding.playerControlView.player = player
 // Disable auto-hide timeout to keep controller always visible
 binding.playerControlView.setShowTimeoutMs(0)
-binding.playerControlView.showController()
+binding.playerControlView.show()
 ```
 
 ### Explanation
 - `setShowTimeoutMs(0)`: Sets the timeout to 0 milliseconds, which disables the auto-hide feature entirely
-- `showController()`: Explicitly shows the controller immediately when the player is initialized
+- `show()`: Explicitly shows the controller immediately when the player is initialized
 
 ## Result
 The music controller and timeline seekbar now remain visible at all times, regardless of user inactivity. Users can always:
