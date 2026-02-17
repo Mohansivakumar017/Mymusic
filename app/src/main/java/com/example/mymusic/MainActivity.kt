@@ -430,19 +430,10 @@ class MainActivity : AppCompatActivity() {
         if (currentIndex >= 0 && currentIndex < songs.size) {
             currentSong = songs[currentIndex]
             currentSong?.let { song ->
-                // Hide mini player - using PlayerControlView instead
+                // Mini player is hidden - using PlayerControlView instead
                 binding.miniPlayerContainer.visibility = View.GONE
                 
-                // Update mini player (keep data synced for now)
-                miniPlayerBinding.miniSongTitle.text = song.title
-                miniPlayerBinding.miniSongArtist.text = song.artist
-                miniPlayerBinding.miniAlbumArt.load(song.getAlbumArtUri()) {
-                    crossfade(true)
-                    placeholder(R.drawable.ic_music_note)
-                    error(R.drawable.ic_music_note)
-                }
-                
-                // Update full player
+                // Update full player (bottom sheet)
                 nowPlayingBinding.fullSongTitle.text = song.title
                 nowPlayingBinding.fullSongArtist.text = song.artist
                 nowPlayingBinding.fullSongAlbum.text = song.album
@@ -463,7 +454,7 @@ class MainActivity : AppCompatActivity() {
         val isPlaying = player.isPlaying
         
         val iconRes = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        miniPlayerBinding.miniPlayPause.setImageResource(iconRes)
+        // Mini player is hidden - only update full player
         nowPlayingBinding.fullPlayPause.setImageResource(iconRes)
     }
     
