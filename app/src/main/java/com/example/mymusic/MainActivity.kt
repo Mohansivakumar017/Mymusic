@@ -106,10 +106,24 @@ class MainActivity : AppCompatActivity() {
                     super.onMediaItemTransition(mediaItem, reason)
                     
                     // Update current playing song when media item changes
-                    val currentIndex = player.currentMediaItemIndex
-                    if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-                        currentPlayingSong = filteredSongs[currentIndex]
-                        currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
+                    // Use the actual MediaItem URI to find the song instead of relying on index
+                    val currentUri = mediaItem?.localConfiguration?.uri?.path
+                    if (currentUri != null) {
+                        // Find the song by matching its path to avoid index mismatches
+                        val song = filteredSongs.find { it.path == currentUri }
+                        if (song != null) {
+                            currentPlayingSong = song
+                            updateNowPlayingInfoImmediate(song)
+                        } else {
+                            // Song not in filtered list - could have been filtered out
+                            Log.w("MainActivity", "Playing song not found in filtered list, clearing current song and hiding player")
+                            currentPlayingSong = null
+                            hidePlayerControlView()
+                        }
+                    } else {
+                        // No media item - clear current song
+                        currentPlayingSong = null
+                        hidePlayerControlView()
                     }
                     updateNowPlayingUI()
                 }
@@ -118,20 +132,22 @@ class MainActivity : AppCompatActivity() {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
                     
-                    // Keep player control visible when playing or paused (if has content)
-                    if (isPlaying || player.currentMediaItemIndex >= 0) {
+                    // Keep player control visible when we have a valid song
+                    if (currentPlayingSong != null) {
                         binding.playerControlView.visibility = View.VISIBLE
+                    } else if (!isPlaying) {
+                        // Hide if no song is loaded and not playing
+                        hidePlayerControlView()
                     }
                 }
             })
             
-            // Get references to now playing views (use post to ensure layout is inflated)
+            // Get references to now playing views (delayed until after songs are loaded)
             binding.playerControlView.post {
                 nowPlayingTitle = binding.playerControlView.findViewById(R.id.now_playing_title)
                 nowPlayingArtist = binding.playerControlView.findViewById(R.id.now_playing_artist)
                 nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.now_playing_album_art)
-                // Update now playing info after views are initialized
-                updateNowPlayingInfo()
+                // Update now playing info will be called after songs load
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error initializing player", e)
@@ -203,11 +219,7 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         updatePlayerWithFilteredSongs()
         
-        // Update currentPlayingSong reference after sorting
-        val currentIndex = player.currentMediaItemIndex
-        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-            currentPlayingSong = filteredSongs[currentIndex]
-        }
+        // currentPlayingSong will be updated via onMediaItemTransition when player updates
     }
 
     private fun onDataChanged() {
@@ -303,7 +315,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePlayerWithFilteredSongs() {
-        if (filteredSongs.isEmpty()) return
+        if (filteredSongs.isEmpty()) {
+            currentPlayingSong = null
+            hidePlayerControlView()
+            return
+        }
         
         // Get current playing song and position if any
         val wasPlaying = player.isPlaying
@@ -325,16 +341,19 @@ class MainActivity : AppCompatActivity() {
                 if (wasPlaying) {
                     player.play()
                 }
-                // Update current playing song reference
-                currentPlayingSong = filteredSongs[newIndex]
+                // currentPlayingSong will be updated via onMediaItemTransition
             } else {
-                // Song was filtered out, clear reference
+                // Song was filtered out
                 currentPlayingSong = null
+                hidePlayerControlView()
             }
+        } else {
+            // No song was playing
+            currentPlayingSong = null
         }
         
-        // Ensure player control view stays visible if we have content
-        if (player.currentMediaItemIndex >= 0) {
+        // Show player control if we have a valid current song
+        if (currentPlayingSong != null) {
             binding.playerControlView.visibility = View.VISIBLE
         }
     }
@@ -342,17 +361,11 @@ class MainActivity : AppCompatActivity() {
     private fun playSongAt(index: Int) {
         if (index !in filteredSongs.indices) return
         
-        // Store the song that's about to play
-        currentPlayingSong = filteredSongs[index]
-        
         try {
             player.seekTo(index, 0)
             player.play()
             
-            // Immediately update the UI with correct song info
-            currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
-            
-            // Show the player control view
+            // Show the player control view - onMediaItemTransition will update the info
             binding.playerControlView.visibility = View.VISIBLE
             
         } catch (e: Exception) {
@@ -431,24 +444,14 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullPrevious.setOnClickListener {
             if (player.hasPreviousMediaItem()) {
                 player.seekToPreviousMediaItem()
-                // Update current playing song
-                val newIndex = player.currentMediaItemIndex
-                if (newIndex >= 0 && newIndex < filteredSongs.size) {
-                    currentPlayingSong = filteredSongs[newIndex]
-                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
-                }
+                // Let onMediaItemTransition handle the UI update
             }
         }
         
         nowPlayingBinding.fullNext.setOnClickListener {
             if (player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
-                // Update current playing song
-                val newIndex = player.currentMediaItemIndex
-                if (newIndex >= 0 && newIndex < filteredSongs.size) {
-                    currentPlayingSong = filteredSongs[newIndex]
-                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
-                }
+                // Let onMediaItemTransition handle the UI update
             }
         }
         
@@ -526,12 +529,8 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateNowPlayingUI() {
-        val currentIndex = player.currentMediaItemIndex
-        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-            val song = filteredSongs[currentIndex]
-            // Update current playing song reference
-            currentPlayingSong = song
-            
+        val song = currentPlayingSong
+        if (song != null) {
             // Update full player (bottom sheet)
             nowPlayingBinding.fullSongTitle.text = song.title
             nowPlayingBinding.fullSongArtist.text = song.artist
@@ -577,6 +576,15 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullRepeat.setColorFilter(tint)
     }
     
+    private fun hidePlayerControlView() {
+        binding.playerControlView.visibility = View.GONE
+        // Also collapse the bottom sheet if it's expanded
+        if (::bottomSheetBehavior.isInitialized && 
+            bottomSheetBehavior.state != BottomSheetBehavior.STATE_HIDDEN) {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+    }
+    
     private fun updateNowPlayingInfoImmediate(song: Song) {
         // Make the player control view visible
         binding.playerControlView.visibility = View.VISIBLE
@@ -600,12 +608,21 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateNowPlayingInfo() {
-        // Always get the current song from the player's index to ensure sync
-        val currentIndex = player.currentMediaItemIndex
-        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-            val song = filteredSongs[currentIndex]
-            currentPlayingSong = song
+        // Update now playing info using the current song reference
+        // This is safer than looking up by index
+        val song = currentPlayingSong
+        if (song != null) {
             updateNowPlayingInfoImmediate(song)
+        } else {
+            // No song playing - try to get from player
+            val currentUri = player.currentMediaItem?.localConfiguration?.uri?.path
+            if (currentUri != null) {
+                val foundSong = filteredSongs.find { it.path == currentUri }
+                if (foundSong != null) {
+                    currentPlayingSong = foundSong
+                    updateNowPlayingInfoImmediate(foundSong)
+                }
+            }
         }
     }
     
