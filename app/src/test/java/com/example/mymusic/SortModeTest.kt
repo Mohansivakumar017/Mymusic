@@ -9,9 +9,9 @@ import org.junit.Assert.*
 class SortModeTest {
     
     @Test
-    fun sortMode_hasThreeValues() {
+    fun sortMode_hasFourValues() {
         val modes = SortMode.values()
-        assertEquals(3, modes.size)
+        assertEquals(4, modes.size)
     }
     
     @Test
@@ -33,8 +33,15 @@ class SortModeTest {
     }
     
     @Test
+    fun sortMode_containsByArtist() {
+        val modes = SortMode.values()
+        assertTrue(modes.contains(SortMode.BY_ARTIST))
+    }
+    
+    @Test
     fun sortMode_valueOf_worksCorrectly() {
         assertEquals(SortMode.BY_NAME, SortMode.valueOf("BY_NAME"))
+        assertEquals(SortMode.BY_ARTIST, SortMode.valueOf("BY_ARTIST"))
         assertEquals(SortMode.BY_DATE, SortMode.valueOf("BY_DATE"))
         assertEquals(SortMode.BY_DURATION, SortMode.valueOf("BY_DURATION"))
     }
