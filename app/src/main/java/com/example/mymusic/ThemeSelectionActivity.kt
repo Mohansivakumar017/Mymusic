@@ -29,7 +29,9 @@ class ThemeSelectionActivity : AppCompatActivity() {
         val themes = listOf(
             ThemeType.SPOTIFY,
             ThemeType.APPLE_MUSIC,
-            ThemeType.IOS_GLASS
+            ThemeType.YOUTUBE_MUSIC,
+            ThemeType.SOUNDCLOUD,
+            ThemeType.TIDAL
         )
         
         val adapter = ThemeAdapter(themes, themeManager.getTheme()) { theme ->
