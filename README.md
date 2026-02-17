@@ -8,19 +8,19 @@ A beautiful Android music player with multiple theme options inspired by popular
 The app now includes three beautiful themes to choose from:
 
 1. **Dark Green Theme** (Default)
-   - Dark background with green accents
+   - Dark theme with green accents
    - Perfect for night listening
-   - Dark theme with green accent colors
+   - Dark background with vibrant green highlights
 
 2. **Light Red Theme**
-   - Light and vibrant design with red accents
+   - Light theme with red accents
    - Gradient backgrounds for a premium feel
-   - Light theme with red accent colors
+   - Bright and energetic color scheme
 
 3. **Minimalist Blue Theme**
+   - Minimalist theme with blue accents
    - Clean, minimalist design
-   - Light gray aesthetic
-   - Minimalist theme with blue accent colors
+   - Light gray aesthetic with blue highlights
 
 ### 🔍 Search Functionality
 - Search songs by title, artist, or album name

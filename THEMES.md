@@ -116,19 +116,19 @@ private fun applyTheme() {
 - **Colors**: Dark background (#121212), Green accent (#1DB954)
 - **Style**: Modern dark theme, high contrast
 - **Best for**: Night listening, battery saving
-- **Description**: Dark theme with green accent colors
+- **Description**: Dark theme with green accents
 
 ### Light Red Theme  
 - **Colors**: Light background (#FAFAFA), Red accent (#FC3C44)
 - **Style**: Light and vibrant with gradients
 - **Best for**: Daytime use, colorful interface
-- **Description**: Light theme with red accent colors
+- **Description**: Light theme with red accents
 
 ### Minimalist Blue Theme
 - **Colors**: Light gray (#F2F2F7), Blue accent (#007AFF)
 - **Style**: Clean, minimalist design
 - **Best for**: Clean aesthetic, modern look
-- **Description**: Minimalist theme with blue accent colors
+- **Description**: Minimalist theme with blue accents
 
 ## Theme Persistence
 
