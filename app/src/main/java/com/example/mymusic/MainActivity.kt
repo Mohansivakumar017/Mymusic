@@ -164,6 +164,10 @@ class MainActivity : AppCompatActivity() {
                         // Controller stays visible if songs are available
                     }
                     updateNowPlayingUI()
+                    
+                    // Force refresh notification to ensure lock screen shows correct song info
+                    // This prevents the notification from showing empty content during transitions
+                    notificationHelper?.invalidate()
                 }
                 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
