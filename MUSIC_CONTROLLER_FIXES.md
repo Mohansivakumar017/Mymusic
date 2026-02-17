@@ -77,12 +77,12 @@ Fixed critical bugs in the music controller that caused wrong song information t
 ### Changes Made
 - **1 variable removed:** `currentSong` (redundant tracking)
 - **1 function added:** `updateMainShuffleButton()` for visual feedback
-- **4 functions modified:**
+- **5 functions modified:**
   - `onIsPlayingChanged()` - improved visibility logic
   - `applySorting()` - added song tracking update
   - `updatePlayerWithFilteredSongs()` - added song tracking and visibility handling
   - `updateNowPlayingUI()` - simplified to always sync tracking variable
-  - `updateNowPlayingInfo()` - rewritten to use index-based lookup
+  - `updateNowPlayingInfo()` - completely rewritten to use index-based lookup for reliability
 
 ### Impact
 - **50 lines changed** (30 removed, 50 added)
