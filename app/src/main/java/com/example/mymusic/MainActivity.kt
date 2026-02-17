@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                     val currentIndex = player.currentMediaItemIndex
                     if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
                         currentPlayingSong = filteredSongs[currentIndex]
-                        updateNowPlayingInfoImmediate(currentPlayingSong!!)
+                        currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
                     }
                     updateNowPlayingUI()
                 }
@@ -332,7 +332,7 @@ class MainActivity : AppCompatActivity() {
             player.play()
             
             // Immediately update the UI with correct song info
-            updateNowPlayingInfoImmediate(currentPlayingSong!!)
+            currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
             
             // Show the player control view
             binding.playerControlView.visibility = View.VISIBLE
@@ -417,7 +417,7 @@ class MainActivity : AppCompatActivity() {
                 val newIndex = player.currentMediaItemIndex
                 if (newIndex >= 0 && newIndex < filteredSongs.size) {
                     currentPlayingSong = filteredSongs[newIndex]
-                    updateNowPlayingInfoImmediate(currentPlayingSong!!)
+                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
                 }
             }
         }
@@ -429,7 +429,7 @@ class MainActivity : AppCompatActivity() {
                 val newIndex = player.currentMediaItemIndex
                 if (newIndex >= 0 && newIndex < filteredSongs.size) {
                     currentPlayingSong = filteredSongs[newIndex]
-                    updateNowPlayingInfoImmediate(currentPlayingSong!!)
+                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
                 }
             }
         }
