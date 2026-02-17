@@ -455,25 +455,30 @@ class MainActivity : AppCompatActivity() {
         
         // Update player with filtered songs
         val mediaItems = filteredSongs.map { it.toMediaItem() }
-        player.setMediaItems(mediaItems)
-        player.prepare()
         
         // If there was a song playing, try to continue it
         if (currentSongPath != null) {
             val newIndex = filteredSongs.indexOfFirst { it.path == currentSongPath }
             if (newIndex >= 0) {
-                player.seekTo(newIndex, currentPosition)
+                // Set media items with the correct starting index and position to avoid
+                // briefly showing the wrong song (prevents onMediaItemTransition to index 0)
+                player.setMediaItems(mediaItems, newIndex, currentPosition)
+                player.prepare()
                 // Only resume playback if requested (e.g., when sorting, not when switching views)
                 if (wasPlaying && resumePlayback) {
                     player.play()
                 }
                 // currentPlayingSong will be updated via onMediaItemTransition
             } else {
-                // Song was filtered out - controller stays visible
+                // Song was filtered out - just set the media items without seeking
+                player.setMediaItems(mediaItems)
+                player.prepare()
                 currentPlayingSong = null
             }
         } else {
-            // No song was playing
+            // No song was playing - just set the media items
+            player.setMediaItems(mediaItems)
+            player.prepare()
             currentPlayingSong = null
         }
         
