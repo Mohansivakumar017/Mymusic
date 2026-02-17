@@ -829,6 +829,7 @@ class MainActivity : AppCompatActivity() {
         val song = currentPlayingSong
         if (song != null) {
             updateNowPlayingInfoImmediate(song)
+            updateNowPlayingUI()
         } else {
             // No song playing - try to get from player
             val currentUri = player.currentMediaItem?.localConfiguration?.uri?.path
@@ -843,6 +844,7 @@ class MainActivity : AppCompatActivity() {
                 if (foundSong != null) {
                     currentPlayingSong = foundSong
                     updateNowPlayingInfoImmediate(foundSong)
+                    updateNowPlayingUI()
                 }
             }
         }
