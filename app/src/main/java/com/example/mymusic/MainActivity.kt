@@ -818,7 +818,13 @@ class MainActivity : AppCompatActivity() {
             // No song playing - try to get from player
             val currentUri = player.currentMediaItem?.localConfiguration?.uri?.path
             if (currentUri != null) {
-                val foundSong = filteredSongs.find { it.path == currentUri }
+                // First try to find in filteredSongs for efficiency
+                var foundSong = filteredSongs.find { it.path == currentUri }
+                if (foundSong == null) {
+                    // Not in filtered list, try full songs list
+                    // This handles the case where we're searching/viewing a playlist and the playing song is filtered out
+                    foundSong = songs.find { it.path == currentUri }
+                }
                 if (foundSong != null) {
                     currentPlayingSong = foundSong
                     updateNowPlayingInfoImmediate(foundSong)
