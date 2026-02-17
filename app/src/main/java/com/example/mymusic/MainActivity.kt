@@ -119,6 +119,8 @@ class MainActivity : AppCompatActivity() {
                 nowPlayingTitle = binding.playerControlView.findViewById(R.id.now_playing_title)
                 nowPlayingArtist = binding.playerControlView.findViewById(R.id.now_playing_artist)
                 nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.now_playing_album_art)
+                // Update now playing info after views are initialized
+                updateNowPlayingInfo()
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error initializing player", e)

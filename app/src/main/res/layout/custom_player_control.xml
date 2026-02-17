@@ -18,7 +18,8 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_music_note" />
+            android:src="@drawable/ic_music_note"
+            android:contentDescription="@string/album_art" />
         
         <LinearLayout
             android:layout_width="0dp"
@@ -31,7 +32,7 @@
                 android:id="@+id/now_playing_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Not Playing"
+                android:text="@string/not_playing"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:maxLines="1"
@@ -41,7 +42,7 @@
                 android:id="@+id/now_playing_artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Unknown Artist"
+                android:text="@string/unknown_artist"
                 android:textSize="14sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -61,7 +62,7 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_skip_previous"
-            android:contentDescription="Previous" />
+            android:contentDescription="@string/previous" />
         
         <ImageButton
             android:id="@id/exo_play_pause"
@@ -69,7 +70,7 @@
             android:layout_height="56dp"
             android:layout_marginHorizontal="16dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Play/Pause" />
+            android:contentDescription="@string/play_pause" />
         
         <ImageButton
             android:id="@id/exo_next"
@@ -77,7 +78,7 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_skip_next"
-            android:contentDescription="Next" />
+            android:contentDescription="@string/next" />
     </LinearLayout>
 
     <!-- Progress bar -->
