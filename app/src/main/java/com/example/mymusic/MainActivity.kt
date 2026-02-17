@@ -1018,10 +1018,6 @@ class MainActivity : AppCompatActivity() {
         
         applySorting()
         
-        // Always update player queue to keep it in sync with UI
-        // Don't resume playback when viewing favorites (only update queue)
-        updatePlayerWithFilteredSongs(resumePlayback = false)
-        
         supportActionBar?.title = getString(R.string.favorites)
         Toast.makeText(this, "Showing ${filteredSongs.size} favorite songs", Toast.LENGTH_SHORT).show()
     }
@@ -1035,10 +1031,6 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.addAll(songs)
         
         applySorting()
-        
-        // Always update player queue to keep it in sync with UI
-        // Don't resume playback when viewing all songs (only update queue)
-        updatePlayerWithFilteredSongs(resumePlayback = false)
         
         supportActionBar?.title = getString(R.string.app_name)
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
@@ -1156,10 +1148,6 @@ class MainActivity : AppCompatActivity() {
         // Apply sorting to the playlist songs
         performSorting()
         adapter.notifyDataSetChanged()
-        
-        // Always update player queue to keep it in sync with UI
-        // Don't resume playback when viewing a playlist (only update queue)
-        updatePlayerWithFilteredSongs(resumePlayback = false)
         
         supportActionBar?.title = playlist.name
         Toast.makeText(this, getString(R.string.showing_songs, filteredSongs.size), Toast.LENGTH_SHORT).show()
