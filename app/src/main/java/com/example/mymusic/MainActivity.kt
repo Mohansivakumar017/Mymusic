@@ -303,10 +303,10 @@ class MainActivity : AppCompatActivity() {
         
         // Update button text
         when (currentSortMode) {
-            SortMode.BY_NAME -> binding.btnSort.text = "Sort: Name ↑"
-            SortMode.BY_ARTIST -> binding.btnSort.text = "Sort: Artist ↑"
-            SortMode.BY_DATE -> binding.btnSort.text = "Sort: Date ↓"
-            SortMode.BY_DURATION -> binding.btnSort.text = "Sort: Duration ↓"
+            SortMode.BY_NAME -> binding.btnSort.text = getString(R.string.sort_by_name)
+            SortMode.BY_ARTIST -> binding.btnSort.text = getString(R.string.sort_by_artist)
+            SortMode.BY_DATE -> binding.btnSort.text = getString(R.string.sort_by_date)
+            SortMode.BY_DURATION -> binding.btnSort.text = getString(R.string.sort_by_duration)
         }
         
         adapter.notifyDataSetChanged()
@@ -1114,7 +1114,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         supportActionBar?.title = playlist.name
-        Toast.makeText(this, "Showing ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.showing_songs, filteredSongs.size), Toast.LENGTH_SHORT).show()
     }
     
     private fun showAddToPlaylistDialog(song: Song) {
