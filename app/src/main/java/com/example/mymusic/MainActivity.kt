@@ -202,8 +202,10 @@ class MainActivity : AppCompatActivity() {
                     
                     // If shuffle mode is enabled, pick a random song
                     if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
+                        val mediaItems = filteredSongs.map { it.toMediaItem() }
                         val randomIndex = (0 until filteredSongs.size).random()
-                        player.seekTo(randomIndex, 0)
+                        player.setMediaItems(mediaItems, randomIndex, 0)
+                        player.prepare()
                         player.play()
                     }
                     
@@ -288,8 +290,10 @@ class MainActivity : AppCompatActivity() {
                 
                 // If shuffle mode is enabled, pick a random song
                 if (player.shuffleModeEnabled) {
+                    val mediaItems = filteredSongs.map { it.toMediaItem() }
                     val randomIndex = (0 until filteredSongs.size).random()
-                    player.seekTo(randomIndex, 0)
+                    player.setMediaItems(mediaItems, randomIndex, 0)
+                    player.prepare()
                     player.play()
                 } else if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
                     // If shuffle is disabled and no song is playing, start from first song
@@ -586,8 +590,10 @@ class MainActivity : AppCompatActivity() {
             
             // If shuffle mode is enabled, pick a random song
             if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
+                val mediaItems = filteredSongs.map { it.toMediaItem() }
                 val randomIndex = (0 until filteredSongs.size).random()
-                player.seekTo(randomIndex, 0)
+                player.setMediaItems(mediaItems, randomIndex, 0)
+                player.prepare()
                 player.play()
             }
             
