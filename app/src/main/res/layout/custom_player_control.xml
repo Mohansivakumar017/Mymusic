@@ -10,12 +10,56 @@
     android:paddingStart="20dp"
     android:paddingEnd="20dp">
 
+    <!-- Now Playing Section -->
+    <ImageView
+        android:id="@+id/img_now_playing_album_art"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:contentDescription="Album Art"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_music_note"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/text_now_playing_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:singleLine="true"
+        android:text="Not Playing"
+        android:textColor="@color/on_background"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/img_now_playing_album_art"
+        app:layout_constraintTop_toTopOf="@id/img_now_playing_album_art" />
+
+    <TextView
+        android:id="@+id/text_now_playing_artist"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:text="Unknown Artist"
+        android:textColor="@color/on_surface"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/img_now_playing_album_art"
+        app:layout_constraintTop_toBottomOf="@id/text_now_playing_title" />
+
     <!-- Progress Bar -->
     <androidx.media3.ui.DefaultTimeBar
         android:id="@id/exo_progress"
         android:layout_width="0dp"
         android:layout_height="26dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         app:played_color="@color/primary"
         app:scrubber_color="@color/primary"
         app:unplayed_color="@color/on_surface"
@@ -23,7 +67,7 @@
         app:touch_target_height="26dp"
         app:scrubber_enabled_size="12dp"
         app:scrubber_disabled_size="0dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/img_now_playing_album_art"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

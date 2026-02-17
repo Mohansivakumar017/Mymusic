@@ -10,6 +10,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -20,6 +22,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.mymusic.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -32,6 +36,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var themeManager: ThemeManager
     private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
+    
+    // Now playing UI elements
+    private var nowPlayingAlbumArt: ImageView? = null
+    private var nowPlayingTitle: TextView? = null
+    private var nowPlayingArtist: TextView? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -72,10 +81,20 @@ class MainActivity : AppCompatActivity() {
             player = ExoPlayer.Builder(this).build()
             binding.playerControlView.player = player
             
+            // Get references to now playing UI elements
+            setupNowPlayingViews()
+            
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
-                    // You could update UI here to highlight the playing song in the list
+                    updateNowPlayingInfo()
+                }
+                
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    super.onPlaybackStateChanged(playbackState)
+                    if (playbackState == Player.STATE_READY) {
+                        updateNowPlayingInfo()
+                    }
                 }
             })
         } catch (e: Exception) {
@@ -233,6 +252,49 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         if (::player.isInitialized) {
             player.release()
+        }
+    }
+    
+    private fun setupNowPlayingViews() {
+        // Get references to the custom player control views
+        binding.playerControlView.post {
+            try {
+                nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.img_now_playing_album_art)
+                nowPlayingTitle = binding.playerControlView.findViewById(R.id.text_now_playing_title)
+                nowPlayingArtist = binding.playerControlView.findViewById(R.id.text_now_playing_artist)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error getting now playing views", e)
+            }
+        }
+    }
+    
+    private fun updateNowPlayingInfo() {
+        try {
+            val currentIndex = player.currentMediaItemIndex
+            if (currentIndex >= 0 && currentIndex < songs.size) {
+                val currentSong = songs[currentIndex]
+                
+                // Update title
+                nowPlayingTitle?.text = currentSong.title
+                
+                // Update artist
+                nowPlayingArtist?.text = currentSong.artist
+                
+                // Update album art
+                nowPlayingAlbumArt?.load(currentSong.getAlbumArtUri()) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_music_note)
+                    error(R.drawable.ic_music_note)
+                    transformations(RoundedCornersTransformation(8f))
+                }
+            } else {
+                // No song playing or invalid index
+                nowPlayingTitle?.text = "Not Playing"
+                nowPlayingArtist?.text = "Unknown Artist"
+                nowPlayingAlbumArt?.setImageResource(R.drawable.ic_music_note)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error updating now playing info", e)
         }
     }
     
