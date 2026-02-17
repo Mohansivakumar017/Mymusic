@@ -307,6 +307,11 @@ class MainActivity : AppCompatActivity() {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
         
+        // PlayerControlView click to expand (makes it expandable)
+        binding.playerControlView.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+        
         // Collapse button
         nowPlayingBinding.btnCollapse.setOnClickListener {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -425,10 +430,10 @@ class MainActivity : AppCompatActivity() {
         if (currentIndex >= 0 && currentIndex < songs.size) {
             currentSong = songs[currentIndex]
             currentSong?.let { song ->
-                // Show mini player
-                binding.miniPlayerContainer.visibility = View.VISIBLE
+                // Hide mini player - using PlayerControlView instead
+                binding.miniPlayerContainer.visibility = View.GONE
                 
-                // Update mini player
+                // Update mini player (keep data synced for now)
                 miniPlayerBinding.miniSongTitle.text = song.title
                 miniPlayerBinding.miniSongArtist.text = song.artist
                 miniPlayerBinding.miniAlbumArt.load(song.getAlbumArtUri()) {

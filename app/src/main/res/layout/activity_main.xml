@@ -92,6 +92,9 @@
         android:padding="8dp"
         android:visibility="gone"
         android:elevation="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@color/surface"
         app:controller_layout_id="@layout/custom_player_control" />
 
     <!-- Now Playing Screen (Bottom Sheet) -->
