@@ -199,6 +199,14 @@ class MainActivity : AppCompatActivity() {
                     updateMiniShuffleButton()
                     updateMainShuffleButton()
                     updateShuffleButton()
+                    
+                    // If shuffle mode is enabled, pick a random song
+                    if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
+                        val randomIndex = (0 until filteredSongs.size).random()
+                        player.seekTo(randomIndex, 0)
+                        player.play()
+                    }
+                    
                     val message = if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off)
                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                 }
@@ -278,8 +286,13 @@ class MainActivity : AppCompatActivity() {
                 // Update visual state
                 updateMainShuffleButton()
                 
-                // If no song is playing, start from first song
-                if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
+                // If shuffle mode is enabled, pick a random song
+                if (player.shuffleModeEnabled) {
+                    val randomIndex = (0 until filteredSongs.size).random()
+                    player.seekTo(randomIndex, 0)
+                    player.play()
+                } else if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
+                    // If shuffle is disabled and no song is playing, start from first song
                     player.seekTo(0, 0)
                     player.play()
                 }
@@ -567,6 +580,14 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullShuffle.setOnClickListener {
             player.shuffleModeEnabled = !player.shuffleModeEnabled
             updateShuffleButton()
+            
+            // If shuffle mode is enabled, pick a random song
+            if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
+                val randomIndex = (0 until filteredSongs.size).random()
+                player.seekTo(randomIndex, 0)
+                player.play()
+            }
+            
             Toast.makeText(this, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
         }
         
@@ -902,7 +923,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         adapter.notifyDataSetChanged()
-        updatePlayerWithFilteredSongs()
+        // Don't update player - preserve current playback
         Toast.makeText(this, "Found ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
     }
     
@@ -911,7 +932,7 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.clear()
         filteredSongs.addAll(songs)
         adapter.notifyDataSetChanged()
-        updatePlayerWithFilteredSongs()
+        // Don't update player - preserve current playback
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
     }
     
