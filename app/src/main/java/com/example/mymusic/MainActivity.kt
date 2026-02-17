@@ -424,7 +424,7 @@ class MainActivity : AppCompatActivity() {
         player.prepare()
     }
 
-    private fun updatePlayerWithFilteredSongs() {
+    private fun updatePlayerWithFilteredSongs(resumePlayback: Boolean = true) {
         // Don't hide the controller even if filteredSongs is empty
         // Keep it visible as long as songs exist in the library
         if (songs.isEmpty()) {
@@ -463,7 +463,8 @@ class MainActivity : AppCompatActivity() {
             val newIndex = filteredSongs.indexOfFirst { it.path == currentSongPath }
             if (newIndex >= 0) {
                 player.seekTo(newIndex, currentPosition)
-                if (wasPlaying) {
+                // Only resume playback if requested (e.g., when sorting, not when switching views)
+                if (wasPlaying && resumePlayback) {
                     player.play()
                 }
                 // currentPlayingSong will be updated via onMediaItemTransition
@@ -1013,7 +1014,8 @@ class MainActivity : AppCompatActivity() {
         applySorting()
         
         // Always update player queue to keep it in sync with UI
-        updatePlayerWithFilteredSongs()
+        // Don't resume playback when viewing favorites (only update queue)
+        updatePlayerWithFilteredSongs(resumePlayback = false)
         
         supportActionBar?.title = getString(R.string.favorites)
         Toast.makeText(this, "Showing ${filteredSongs.size} favorite songs", Toast.LENGTH_SHORT).show()
@@ -1030,7 +1032,8 @@ class MainActivity : AppCompatActivity() {
         applySorting()
         
         // Always update player queue to keep it in sync with UI
-        updatePlayerWithFilteredSongs()
+        // Don't resume playback when viewing all songs (only update queue)
+        updatePlayerWithFilteredSongs(resumePlayback = false)
         
         supportActionBar?.title = getString(R.string.app_name)
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
@@ -1150,7 +1153,8 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         
         // Always update player queue to keep it in sync with UI
-        updatePlayerWithFilteredSongs()
+        // Don't resume playback when viewing a playlist (only update queue)
+        updatePlayerWithFilteredSongs(resumePlayback = false)
         
         supportActionBar?.title = playlist.name
         Toast.makeText(this, getString(R.string.showing_songs, filteredSongs.size), Toast.LENGTH_SHORT).show()
