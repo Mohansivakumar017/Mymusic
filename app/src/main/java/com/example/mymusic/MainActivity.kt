@@ -237,6 +237,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupNowPlayingViews() {
         // Get references to the custom player control views
+        // Using post() because PlayerControlView hasn't inflated custom layout yet in onCreate
         binding.playerControlView.post {
             try {
                 nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.img_now_playing_album_art)
@@ -251,6 +252,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateNowPlayingInfo() {
         try {
             val currentIndex = player.currentMediaItemIndex
+            // Player always uses the full 'songs' list, not 'filteredSongs'
+            // See playSongAt() which maps filtered indices to actual song indices
             if (currentIndex >= 0 && currentIndex < songs.size) {
                 val currentSong = songs[currentIndex]
                 
