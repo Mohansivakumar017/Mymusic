@@ -481,7 +481,10 @@ class MainActivity : AppCompatActivity() {
         if (index !in filteredSongs.indices) return
         
         try {
-            player.seekTo(index, 0)
+            // Update player queue to match current filtered songs
+            val mediaItems = filteredSongs.map { it.toMediaItem() }
+            player.setMediaItems(mediaItems, index, 0)
+            player.prepare()
             player.play()
             
             // Show the player control view - onMediaItemTransition will update the info
