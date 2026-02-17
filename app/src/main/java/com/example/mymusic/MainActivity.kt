@@ -450,6 +450,9 @@ class MainActivity : AppCompatActivity() {
             player.currentMediaItem?.localConfiguration?.uri?.path
         } else null
         
+        // Stop current playback before updating queue to prevent overlap
+        player.stop()
+        
         // Update player with filtered songs
         val mediaItems = filteredSongs.map { it.toMediaItem() }
         player.setMediaItems(mediaItems)
@@ -483,6 +486,9 @@ class MainActivity : AppCompatActivity() {
         if (index !in filteredSongs.indices) return
         
         try {
+            // Stop current playback before updating queue to prevent overlap
+            player.stop()
+            
             // Update player queue to match current filtered songs
             val mediaItems = filteredSongs.map { it.toMediaItem() }
             player.setMediaItems(mediaItems, index, 0)
@@ -740,6 +746,9 @@ class MainActivity : AppCompatActivity() {
     
     private fun playRandomSongFromFiltered() {
         if (filteredSongs.isEmpty()) return
+        
+        // Stop current playback before updating queue to prevent overlap
+        player.stop()
         
         val mediaItems = filteredSongs.map { it.toMediaItem() }
         val randomIndex = (0 until filteredSongs.size).random()
