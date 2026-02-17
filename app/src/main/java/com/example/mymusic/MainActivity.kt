@@ -305,9 +305,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         adapter.notifyDataSetChanged()
-        updatePlayerWithFilteredSongs()
-        
-        // currentPlayingSong will be updated via onMediaItemTransition when player updates
+        // Don't update player when sorting - the same songs are still there, just reordered
+        // This prevents playback interruption/blinking when sorting
     }
 
     private fun onDataChanged() {
@@ -989,17 +988,62 @@ class MainActivity : AppCompatActivity() {
         playlistNames.add(0, "+ Create New Playlist")
         
         val builder = android.app.AlertDialog.Builder(this)
-        builder.setTitle(getString(R.string.playlists))
+        builder.setTitle("Playlists (long-press to delete)")
         
-        builder.setItems(playlistNames.toTypedArray()) { _, which ->
-            if (which == 0) {
+        val listView = android.widget.ListView(this)
+        val arrayAdapter = android.widget.ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            playlistNames
+        )
+        listView.adapter = arrayAdapter
+        
+        // Handle normal click - open playlist
+        listView.setOnItemClickListener { _, _, position, _ ->
+            if (position == 0) {
                 // Create new playlist
                 showCreatePlaylistDialog()
             } else {
                 // Show playlist
-                val playlist = playlists[which - 1]
+                val playlist = playlists[position - 1]
                 showPlaylist(playlist)
             }
+        }
+        
+        // Handle long click - delete playlist
+        listView.setOnItemLongClickListener { _, _, position, _ ->
+            if (position > 0) {
+                val playlist = playlists[position - 1]
+                showDeletePlaylistConfirmation(playlist)
+                true
+            } else {
+                false
+            }
+        }
+        
+        builder.setView(listView)
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        builder.show()
+    }
+    
+    private fun showDeletePlaylistConfirmation(playlist: Playlist) {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Delete Playlist")
+        builder.setMessage("Are you sure you want to delete '${playlist.name}'?")
+        
+        builder.setPositiveButton("Delete") { dialog, _ ->
+            playlistManager.deletePlaylist(playlist.id)
+            Toast.makeText(this, "Playlist deleted", Toast.LENGTH_SHORT).show()
+            
+            // If we're currently viewing this playlist, go back to all songs
+            if (currentViewMode == ViewMode.PLAYLIST && currentPlaylistId == playlist.id) {
+                showAllSongs()
+            }
+            
+            dialog.dismiss()
         }
         
         builder.setNegativeButton("Cancel") { dialog, _ ->
@@ -1043,10 +1087,31 @@ class MainActivity : AppCompatActivity() {
         currentPlaylistId = playlist.id
         isSearching = false
         
+        // Get current playing song before changing filtered list
+        val currentSongPath = if (player.currentMediaItemIndex >= 0) {
+            player.currentMediaItem?.localConfiguration?.uri?.path
+        } else null
+        
         filteredSongs.clear()
         filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
         
-        applySorting()
+        // Apply sorting to the playlist songs
+        when (currentSortMode) {
+            SortMode.BY_NAME -> filteredSongs.sortBy { it.title.lowercase() }
+            SortMode.BY_ARTIST -> filteredSongs.sortBy { it.artist.lowercase() }
+            SortMode.BY_DATE -> filteredSongs.sortByDescending { it.dateAdded }
+            SortMode.BY_DURATION -> filteredSongs.sortByDescending { it.duration }
+        }
+        adapter.notifyDataSetChanged()
+        
+        // Only update player if current song is not in the new playlist
+        // This preserves playback when switching playlists
+        val currentSongInPlaylist = currentSongPath != null && 
+                                    filteredSongs.any { it.path == currentSongPath }
+        if (!currentSongInPlaylist) {
+            // Current song is not in this playlist, update player
+            updatePlayerWithFilteredSongs()
+        }
         
         supportActionBar?.title = playlist.name
         Toast.makeText(this, "Showing ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
