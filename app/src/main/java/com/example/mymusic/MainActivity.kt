@@ -78,7 +78,8 @@ class MainActivity : AppCompatActivity() {
         
         // Initialize ViewBinding for now playing screen and mini player
         nowPlayingBinding = ViewNowPlayingBinding.bind(binding.nowPlayingContainer)
-        miniPlayerBinding = ViewMiniPlayerBinding.bind(binding.miniPlayerContainer.getChildAt(0))
+        val miniPlayerView = binding.miniPlayerContainer.findViewById<View>(R.id.mini_player_root)
+        miniPlayerBinding = ViewMiniPlayerBinding.bind(miniPlayerView)
         
         // Setup toolbar
         setSupportActionBar(binding.toolbar)
