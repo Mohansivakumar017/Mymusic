@@ -46,7 +46,6 @@ class MainActivity : AppCompatActivity() {
     
     // Now Playing UI components
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
-    private var currentSong: Song? = null
     private var currentPlayingSong: Song? = null
     private val progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private lateinit var progressUpdateRunnable: Runnable
@@ -119,8 +118,8 @@ class MainActivity : AppCompatActivity() {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
                     
-                    // Keep player control visible when playing
-                    if (isPlaying) {
+                    // Keep player control visible when playing or paused (if has content)
+                    if (isPlaying || player.currentMediaItemIndex >= 0) {
                         binding.playerControlView.visibility = View.VISIBLE
                     }
                 }
@@ -171,6 +170,9 @@ class MainActivity : AppCompatActivity() {
                 // Toggle shuffle mode
                 player.shuffleModeEnabled = !player.shuffleModeEnabled
                 
+                // Update visual state
+                updateMainShuffleButton()
+                
                 // If no song is playing, start from first song
                 if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
                     player.seekTo(0, 0)
@@ -200,6 +202,12 @@ class MainActivity : AppCompatActivity() {
         }
         adapter.notifyDataSetChanged()
         updatePlayerWithFilteredSongs()
+        
+        // Update currentPlayingSong reference after sorting
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
+            currentPlayingSong = filteredSongs[currentIndex]
+        }
     }
 
     private fun onDataChanged() {
@@ -317,7 +325,17 @@ class MainActivity : AppCompatActivity() {
                 if (wasPlaying) {
                     player.play()
                 }
+                // Update current playing song reference
+                currentPlayingSong = filteredSongs[newIndex]
+            } else {
+                // Song was filtered out, clear reference
+                currentPlayingSong = null
             }
+        }
+        
+        // Ensure player control view stays visible if we have content
+        if (player.currentMediaItemIndex >= 0) {
+            binding.playerControlView.visibility = View.VISIBLE
         }
     }
 
@@ -367,7 +385,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Restore player visibility if music was playing
+        // Restore player visibility if music was playing or paused with content
         if (::player.isInitialized && player.currentMediaItemIndex >= 0) {
             binding.playerControlView.visibility = View.VISIBLE
             updateNowPlayingInfo()
@@ -510,22 +528,23 @@ class MainActivity : AppCompatActivity() {
     private fun updateNowPlayingUI() {
         val currentIndex = player.currentMediaItemIndex
         if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-            currentSong = filteredSongs[currentIndex]
-            currentSong?.let { song ->
-                // Update full player (bottom sheet)
-                nowPlayingBinding.fullSongTitle.text = song.title
-                nowPlayingBinding.fullSongArtist.text = song.artist
-                nowPlayingBinding.fullSongAlbum.text = song.album
-                nowPlayingBinding.fullAlbumArt.load(song.getAlbumArtUri()) {
-                    crossfade(true)
-                    placeholder(R.drawable.ic_music_note)
-                    error(R.drawable.ic_music_note)
-                }
-                
-                updatePlayPauseButtons()
-                updateShuffleButton()
-                updateRepeatButton()
+            val song = filteredSongs[currentIndex]
+            // Update current playing song reference
+            currentPlayingSong = song
+            
+            // Update full player (bottom sheet)
+            nowPlayingBinding.fullSongTitle.text = song.title
+            nowPlayingBinding.fullSongArtist.text = song.artist
+            nowPlayingBinding.fullSongAlbum.text = song.album
+            nowPlayingBinding.fullAlbumArt.load(song.getAlbumArtUri()) {
+                crossfade(true)
+                placeholder(R.drawable.ic_music_note)
+                error(R.drawable.ic_music_note)
             }
+            
+            updatePlayPauseButtons()
+            updateShuffleButton()
+            updateRepeatButton()
         }
     }
     
@@ -541,6 +560,12 @@ class MainActivity : AppCompatActivity() {
         val colors = ThemeHelper.getThemeColors(currentTheme)
         val tint = if (player.shuffleModeEnabled) colors.primary else colors.onSurface
         nowPlayingBinding.fullShuffle.setColorFilter(tint)
+    }
+    
+    private fun updateMainShuffleButton() {
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = if (player.shuffleModeEnabled) colors.primary else colors.onSurface
+        binding.btnShuffleMain.setColorFilter(tint)
     }
     
     private fun updateRepeatButton() {
@@ -575,18 +600,13 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateNowPlayingInfo() {
-        // Use the stored current playing song instead of index
-        val song = currentPlayingSong ?: run {
-            // Fallback to index-based if currentPlayingSong is not set
-            val currentIndex = player.currentMediaItemIndex
-            if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-                filteredSongs[currentIndex]
-            } else {
-                return
-            }
+        // Always get the current song from the player's index to ensure sync
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
+            val song = filteredSongs[currentIndex]
+            currentPlayingSong = song
+            updateNowPlayingInfoImmediate(song)
         }
-        
-        updateNowPlayingInfoImmediate(song)
     }
     
     private fun applyTheme() {
