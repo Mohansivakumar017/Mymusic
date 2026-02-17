@@ -18,8 +18,10 @@
     <string name="create_playlist">Create Playlist</string>
     <string name="edit_playlist">Edit Playlist</string>
     <string name="delete_playlist">Delete Playlist</string>
-    <string name="delete_playlist_confirmation">Are you sure you want to delete \'%s\'?</string>
+    <string name="delete_playlist_confirmation">Are you sure you want to delete \"%s\"?</string>
     <string name="playlist_deleted">Playlist deleted</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
     <string name="playlist_name">Playlist Name</string>
     <string name="add_to_playlist">Add to Playlist</string>
     <string name="remove_from_playlist">Remove from Playlist</string>

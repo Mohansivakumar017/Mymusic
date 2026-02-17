@@ -1027,7 +1027,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         builder.setView(listView)
-        builder.setNegativeButton("Cancel") { dialog, _ ->
+        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
             dialog.dismiss()
         }
         
@@ -1039,7 +1039,7 @@ class MainActivity : AppCompatActivity() {
         builder.setTitle(getString(R.string.delete_playlist))
         builder.setMessage(getString(R.string.delete_playlist_confirmation, playlist.name))
         
-        builder.setPositiveButton("Delete") { dialog, _ ->
+        builder.setPositiveButton(getString(R.string.delete)) { dialog, _ ->
             playlistManager.deletePlaylist(playlist.id)
             Toast.makeText(this, getString(R.string.playlist_deleted), Toast.LENGTH_SHORT).show()
             
@@ -1051,7 +1051,7 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
         }
         
-        builder.setNegativeButton("Cancel") { dialog, _ ->
+        builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
             dialog.dismiss()
         }
         
