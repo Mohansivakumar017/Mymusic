@@ -135,14 +135,14 @@ class MainActivity : AppCompatActivity() {
                             updateNowPlayingInfoImmediate(song)
                         } else {
                             // Song not in filtered list - could have been filtered out
-                            Log.w("MainActivity", "Playing song not found in filtered list, clearing current song and hiding player")
+                            Log.w("MainActivity", "Playing song not found in filtered list")
                             currentPlayingSong = null
-                            hidePlayerControlView()
+                            // Controller stays visible if songs are available
                         }
                     } else {
                         // No media item - clear current song
                         currentPlayingSong = null
-                        hidePlayerControlView()
+                        // Controller stays visible if songs are available
                     }
                     updateNowPlayingUI()
                 }
@@ -151,11 +151,10 @@ class MainActivity : AppCompatActivity() {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
                     
-                    // Keep player control visible when we have a valid song
-                    if (currentPlayingSong != null) {
+                    // Keep player control always visible when songs are available
+                    if (filteredSongs.isNotEmpty()) {
                         binding.playerControlView.visibility = View.VISIBLE
-                    } else if (!isPlaying) {
-                        // Hide if no song is loaded and not playing
+                    } else {
                         hidePlayerControlView()
                     }
                 }
@@ -349,7 +348,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePlayerPlaylist() {
-        val mediaItems = songs.map { MediaItem.fromUri(it.path) }
+        val mediaItems = filteredSongs.map { MediaItem.fromUri(it.path) }
         player.setMediaItems(mediaItems)
         player.prepare()
     }
@@ -383,17 +382,16 @@ class MainActivity : AppCompatActivity() {
                 }
                 // currentPlayingSong will be updated via onMediaItemTransition
             } else {
-                // Song was filtered out
+                // Song was filtered out - controller stays visible
                 currentPlayingSong = null
-                hidePlayerControlView()
             }
         } else {
             // No song was playing
             currentPlayingSong = null
         }
         
-        // Show player control if we have a valid current song
-        if (currentPlayingSong != null) {
+        // Show player control when songs are available
+        if (filteredSongs.isNotEmpty()) {
             binding.playerControlView.visibility = View.VISIBLE
         }
     }
