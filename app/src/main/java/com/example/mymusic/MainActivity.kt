@@ -194,10 +194,12 @@ class MainActivity : AppCompatActivity() {
                 // Setup shuffle button click
                 miniShuffleButton?.setOnClickListener {
                     player.shuffleModeEnabled = !player.shuffleModeEnabled
+                    // Update all shuffle buttons to keep them in sync
                     updateMiniShuffleButton()
                     updateMainShuffleButton()
                     updateShuffleButton()
-                    Toast.makeText(this@MainActivity, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
+                    val message = if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off)
+                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                 }
                 
                 // Setup repeat button click
@@ -207,12 +209,13 @@ class MainActivity : AppCompatActivity() {
                         Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
                         else -> Player.REPEAT_MODE_OFF
                     }
+                    // Update all repeat buttons to keep them in sync
                     updateMiniRepeatButton()
                     updateRepeatButton()
                     val message = when (player.repeatMode) {
-                        Player.REPEAT_MODE_ALL -> "Repeat All"
-                        Player.REPEAT_MODE_ONE -> "Repeat One"
-                        else -> "Repeat Off"
+                        Player.REPEAT_MODE_ALL -> getString(R.string.repeat_all)
+                        Player.REPEAT_MODE_ONE -> getString(R.string.repeat_one)
+                        else -> getString(R.string.repeat_off)
                     }
                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                 }

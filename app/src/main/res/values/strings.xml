@@ -22,4 +22,9 @@
     <string name="sleep_timer_set">Sleep timer set for %d minutes</string>
     <string name="sleep_timer_cancel">Sleep timer cancelled</string>
     <string name="all_songs">All Songs</string>
+    <string name="shuffle_on">Shuffle On</string>
+    <string name="shuffle_off">Shuffle Off</string>
+    <string name="repeat_all">Repeat All</string>
+    <string name="repeat_one">Repeat One</string>
+    <string name="repeat_off">Repeat Off</string>
 </resources>
