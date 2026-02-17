@@ -10,17 +10,17 @@ The app now includes three beautiful themes to choose from:
 1. **Dark Green Theme** (Default)
    - Dark theme with green accents
    - Perfect for night listening
-   - Dark background with vibrant green highlights
+   - Dark background with green accents
 
 2. **Light Red Theme**
    - Light theme with red accents
    - Gradient backgrounds for a premium feel
-   - Bright and energetic color scheme
+   - Bright design with red accents
 
 3. **Minimalist Blue Theme**
    - Minimalist theme with blue accents
    - Clean, minimalist design
-   - Light gray aesthetic with blue highlights
+   - Light gray aesthetic with blue accents
 
 ### 🔍 Search Functionality
 - Search songs by title, artist, or album name
