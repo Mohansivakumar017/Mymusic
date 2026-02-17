@@ -3,12 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     
     <item
-        android:id="@+id/action_themes"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="Themes"
-        app:showAsAction="never" />
-    
-    <item
         android:id="@+id/action_search"
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search"

@@ -9,7 +9,6 @@ import com.example.mymusic.databinding.ItemSongBinding
 
 class SongAdapter(
     private val songs: List<Song>,
-    private val theme: ThemeType = ThemeType.SPOTIFY,
     private val onSongClick: (Int) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
@@ -22,17 +21,10 @@ class SongAdapter(
 
     override fun onBindViewHolder(holder: SongViewHolder, position: Int) {
         val song = songs[position]
-        val colors = ThemeHelper.getThemeColors(theme)
         
         holder.binding.textTitle.text = song.title
         holder.binding.textArtist.text = song.artist
         holder.binding.textDuration.text = formatDuration(song.duration)
-        
-        // Apply theme colors
-        holder.binding.textTitle.setTextColor(colors.onBackground)
-        holder.binding.textArtist.setTextColor(colors.onSurface)
-        holder.binding.textDuration.setTextColor(colors.onSurface)
-        holder.binding.root.setCardBackgroundColor(colors.cardBackground)
         
         holder.binding.imgAlbumArt.load(song.getAlbumArtUri()) {
             crossfade(true)

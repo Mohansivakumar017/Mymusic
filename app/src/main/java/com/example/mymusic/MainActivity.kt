@@ -1,9 +1,7 @@
 package com.example.mymusic
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -33,8 +31,6 @@ class MainActivity : AppCompatActivity() {
     private val songs = mutableListOf<Song>()
     private val filteredSongs = mutableListOf<Song>()
     private lateinit var adapter: SongAdapter
-    private lateinit var themeManager: ThemeManager
-    private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
     
     // Now playing UI elements
@@ -50,32 +46,16 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
             }
         }
-    
-    private val themeSelectionLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                // Theme was changed, recreate activity
-                currentTheme = themeManager.getTheme()
-                recreate()
-            }
-        }
 
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize theme manager
-        themeManager = ThemeManager(this)
-        currentTheme = themeManager.getTheme()
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
         // Setup toolbar
         setSupportActionBar(binding.toolbar)
-        
-        // Apply theme
-        applyTheme()
 
         try {
             player = ExoPlayer.Builder(this).build()
@@ -108,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         filteredSongs.addAll(songs)
-        adapter = SongAdapter(filteredSongs, currentTheme) { position ->
+        adapter = SongAdapter(filteredSongs) { position ->
             playSongAt(position)
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
@@ -298,43 +278,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun applyTheme() {
-        val colors = ThemeHelper.getThemeColors(currentTheme)
-        
-        // Apply background colors
-        binding.root.setBackgroundColor(colors.background)
-        binding.toolbar.setBackgroundColor(colors.surface)
-        binding.toolbar.setTitleTextColor(colors.onBackground)
-        binding.sortBar.setBackgroundColor(colors.surface)
-        binding.playerControlContainer.setBackgroundColor(colors.surface)
-        
-        // Apply status bar color
-        window.statusBarColor = colors.primaryDark
-        
-        // Apply gradient if needed
-        if (colors.useGradient && colors.gradientStart != null && colors.gradientEnd != null) {
-            val gradientDrawable = GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(colors.gradientStart, colors.gradientEnd)
-            )
-            binding.root.background = gradientDrawable
-        }
-        
-        // Update button colors
-        binding.btnSortName.setTextColor(colors.onBackground)
-        binding.btnSortDate.setTextColor(colors.onBackground)
-        binding.btnSortDuration.setTextColor(colors.onBackground)
-        binding.btnShuffleMain.setColorFilter(colors.primary)
-        
-        // Recreate adapter to apply theme to items
-        if (::adapter.isInitialized) {
-            adapter = SongAdapter(filteredSongs, currentTheme) { position ->
-                playSongAt(position)
-            }
-            binding.recyclerView.adapter = adapter
-        }
-    }
-    
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -342,11 +285,6 @@ class MainActivity : AppCompatActivity() {
     
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_themes -> {
-                val intent = Intent(this, ThemeSelectionActivity::class.java)
-                themeSelectionLauncher.launch(intent)
-                true
-            }
             R.id.action_search -> {
                 showSearchDialog()
                 true
