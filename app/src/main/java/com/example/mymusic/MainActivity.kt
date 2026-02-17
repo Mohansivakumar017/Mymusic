@@ -165,6 +165,7 @@ class MainActivity : AppCompatActivity() {
         if (songs.isNotEmpty()) {
             filteredSongs.clear()
             filteredSongs.addAll(songs)
+            currentSortMode = SortMode.BY_NAME // Ensure default sort
             applySorting() // Apply default sort
             updatePlayerPlaylist()
         } else {
