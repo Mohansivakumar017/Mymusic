@@ -263,7 +263,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupButtons() {
         binding.btnSort.setOnClickListener {
             currentSortMode = when (currentSortMode) {
-                SortMode.BY_NAME -> SortMode.BY_DATE
+                SortMode.BY_NAME -> SortMode.BY_ARTIST
+                SortMode.BY_ARTIST -> SortMode.BY_DATE
                 SortMode.BY_DATE -> SortMode.BY_DURATION
                 SortMode.BY_DURATION -> SortMode.BY_NAME
             }
