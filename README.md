@@ -10,17 +10,17 @@ The app now includes three beautiful themes to choose from:
 1. **Dark Green Theme** (Default)
    - Dark background with green accents
    - Perfect for night listening
-   - Themed color scheme inspired by popular music apps
+   - Dark theme with green accent colors
 
 2. **Light Red Theme**
    - Light and vibrant design with red accents
    - Gradient backgrounds for a premium feel
-   - Themed color scheme inspired by popular music apps
+   - Light theme with red accent colors
 
 3. **Minimalist Blue Theme**
    - Clean, minimalist design
    - Light gray aesthetic
-   - Light colors with blue accents
+   - Minimalist theme with blue accent colors
 
 ### 🔍 Search Functionality
 - Search songs by title, artist, or album name
@@ -165,4 +165,3 @@ This project is open source and available for educational purposes.
 ## Credits
 
 Developed with ❤️ using modern Android development practices.
-Themed color schemes inspired by popular music apps.
