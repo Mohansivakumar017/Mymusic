@@ -10,7 +10,7 @@ class ViewModeTest {
     
     @Test
     fun viewMode_hasAllRequiredValues() {
-        val values = ViewMode.values()
+        val values = ViewMode.entries
         
         assertEquals(3, values.size)
         assertTrue(values.contains(ViewMode.ALL_SONGS))
