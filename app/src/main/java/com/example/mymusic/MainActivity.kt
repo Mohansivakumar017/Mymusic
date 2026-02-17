@@ -127,6 +127,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupNowPlayingUI()
+        
+        // Hide mini player permanently - using PlayerControlView instead
+        binding.miniPlayerContainer.visibility = View.GONE
+        
         setupRecyclerView()
         setupButtons()
         checkPermissionAndLoad()
@@ -430,9 +434,6 @@ class MainActivity : AppCompatActivity() {
         if (currentIndex >= 0 && currentIndex < songs.size) {
             currentSong = songs[currentIndex]
             currentSong?.let { song ->
-                // Mini player is hidden - using PlayerControlView instead
-                binding.miniPlayerContainer.visibility = View.GONE
-                
                 // Update full player (bottom sheet)
                 nowPlayingBinding.fullSongTitle.text = song.title
                 nowPlayingBinding.fullSongArtist.text = song.artist
