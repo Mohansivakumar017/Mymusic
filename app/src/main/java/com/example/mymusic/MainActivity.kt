@@ -166,6 +166,7 @@ class MainActivity : AppCompatActivity() {
                     updateNowPlayingUI()
                     
                     // Force refresh notification to ensure lock screen shows correct song info
+                    // mediaItem parameter contains the new media item with its metadata already set
                     // Only invalidate if we have valid title metadata (artist has fallback in NotificationHelper)
                     if (!mediaItem?.mediaMetadata?.title.isNullOrEmpty()) {
                         notificationHelper?.invalidate()
