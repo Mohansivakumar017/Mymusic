@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var themeManager: ThemeManager
     private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
+    private var currentSortMode = SortMode.BY_NAME
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -97,17 +98,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        binding.btnSortName.setOnClickListener {
-            songs.sortBy { it.title.lowercase() }
-            onDataChanged()
-        }
-        binding.btnSortDate.setOnClickListener {
-            songs.sortByDescending { it.dateAdded }
-            onDataChanged()
-        }
-        binding.btnSortDuration.setOnClickListener {
-            songs.sortByDescending { it.duration }
-            onDataChanged()
+        binding.btnSort.setOnClickListener {
+            currentSortMode = when (currentSortMode) {
+                SortMode.BY_NAME -> SortMode.BY_DATE
+                SortMode.BY_DATE -> SortMode.BY_DURATION
+                SortMode.BY_DURATION -> SortMode.BY_NAME
+            }
+            applySorting()
         }
         binding.btnShuffleMain.setOnClickListener {
             if (songs.isNotEmpty()) {
@@ -117,6 +114,24 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Shuffle Mode On", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+    
+    private fun applySorting() {
+        when (currentSortMode) {
+            SortMode.BY_NAME -> {
+                filteredSongs.sortBy { it.title.lowercase() }
+                binding.btnSort.text = "Sort: Name ↑"
+            }
+            SortMode.BY_DATE -> {
+                filteredSongs.sortByDescending { it.dateAdded }
+                binding.btnSort.text = "Sort: Date ↓"
+            }
+            SortMode.BY_DURATION -> {
+                filteredSongs.sortByDescending { it.duration }
+                binding.btnSort.text = "Sort: Duration ↓"
+            }
+        }
+        adapter.notifyDataSetChanged()
     }
 
     private fun onDataChanged() {
@@ -148,10 +163,9 @@ class MainActivity : AppCompatActivity() {
     private fun loadSongsAndStart() {
         loadSongs()
         if (songs.isNotEmpty()) {
-            songs.sortBy { it.title.lowercase() } // Default sort
             filteredSongs.clear()
             filteredSongs.addAll(songs)
-            adapter.notifyDataSetChanged()
+            applySorting() // Apply default sort
             updatePlayerPlaylist()
         } else {
             Toast.makeText(this, "No songs found", Toast.LENGTH_SHORT).show()
@@ -259,9 +273,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Update button colors
-        binding.btnSortName.setTextColor(colors.onBackground)
-        binding.btnSortDate.setTextColor(colors.onBackground)
-        binding.btnSortDuration.setTextColor(colors.onBackground)
+        binding.btnSort.setTextColor(colors.onBackground)
         binding.btnShuffleMain.setColorFilter(colors.primary)
         
         // Recreate adapter to apply theme to items
@@ -348,4 +360,10 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
     }
+}
+
+enum class SortMode {
+    BY_NAME,
+    BY_DATE,
+    BY_DURATION
 }
