@@ -141,14 +141,20 @@ class MainActivity : AppCompatActivity() {
                     // Use the actual MediaItem URI to find the song instead of relying on index
                     val currentUri = mediaItem?.localConfiguration?.uri?.path
                     if (currentUri != null) {
-                        // Find the song by matching its path to avoid index mismatches
-                        val song = filteredSongs.find { it.path == currentUri }
+                        // First try to find in filteredSongs for efficiency
+                        var song = filteredSongs.find { it.path == currentUri }
+                        if (song == null) {
+                            // Not in filtered list, try full songs list
+                            // This handles the case where we're searching and the playing song is filtered out
+                            song = songs.find { it.path == currentUri }
+                        }
+                        
                         if (song != null) {
                             currentPlayingSong = song
                             updateNowPlayingInfoImmediate(song)
                         } else {
-                            // Song not in filtered list - could have been filtered out
-                            Log.w("MainActivity", "Playing song not found in filtered list")
+                            // Song not found at all
+                            Log.w("MainActivity", "Playing song not found in song library")
                             currentPlayingSong = null
                             // Controller stays visible if songs are available
                         }
@@ -997,6 +1003,9 @@ class MainActivity : AppCompatActivity() {
         
         applySorting()
         
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
+        
         supportActionBar?.title = getString(R.string.favorites)
         Toast.makeText(this, "Showing ${filteredSongs.size} favorite songs", Toast.LENGTH_SHORT).show()
     }
@@ -1010,6 +1019,9 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.addAll(songs)
         
         applySorting()
+        
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
         
         supportActionBar?.title = getString(R.string.app_name)
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
@@ -1121,9 +1133,6 @@ class MainActivity : AppCompatActivity() {
         currentPlaylistId = playlist.id
         isSearching = false
         
-        // Get current playing song before changing filtered list
-        val currentSongPath = player.currentMediaItem?.localConfiguration?.uri?.path
-        
         filteredSongs.clear()
         filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
         
@@ -1131,14 +1140,8 @@ class MainActivity : AppCompatActivity() {
         performSorting()
         adapter.notifyDataSetChanged()
         
-        // Only update player if current song is not in the new playlist
-        // This preserves playback when switching playlists
-        val currentSongInPlaylist = currentSongPath != null && 
-                                    filteredSongs.any { it.path == currentSongPath }
-        if (!currentSongInPlaylist) {
-            // Current song is not in this playlist, update player
-            updatePlayerWithFilteredSongs()
-        }
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
         
         supportActionBar?.title = playlist.name
         Toast.makeText(this, getString(R.string.showing_songs, filteredSongs.size), Toast.LENGTH_SHORT).show()
