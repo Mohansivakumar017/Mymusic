@@ -376,16 +376,9 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupNowPlayingUI() {
         // Setup bottom sheet behavior
-        bottomSheetBehavior = BottomSheetBehavior.from(nowPlayingBinding.root)
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.nowPlayingContainer)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.isHideable = true
-        
-        // PlayerControlView click to expand bottom sheet
-        binding.playerControlView.setOnClickListener {
-            if (player.isPlaying || player.currentMediaItemIndex >= 0) {
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-            }
-        }
         
         // Collapse button
         nowPlayingBinding.btnCollapse.setOnClickListener {
