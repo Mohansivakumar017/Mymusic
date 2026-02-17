@@ -1093,9 +1093,7 @@ class MainActivity : AppCompatActivity() {
         isSearching = false
         
         // Get current playing song before changing filtered list
-        val currentSongPath = if (player.currentMediaItemIndex >= 0) {
-            player.currentMediaItem?.localConfiguration?.uri?.path
-        } else null
+        val currentSongPath = player.currentMediaItem?.localConfiguration?.uri?.path
         
         filteredSongs.clear()
         filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
