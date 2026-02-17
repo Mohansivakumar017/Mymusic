@@ -154,6 +154,8 @@ class MainActivity : AppCompatActivity() {
                     // Keep player control always visible when songs are available
                     if (filteredSongs.isNotEmpty()) {
                         binding.playerControlView.visibility = View.VISIBLE
+                    } else {
+                        hidePlayerControlView()
                     }
                 }
             })
@@ -388,8 +390,10 @@ class MainActivity : AppCompatActivity() {
             currentPlayingSong = null
         }
         
-        // Always show player control when songs are available
-        binding.playerControlView.visibility = View.VISIBLE
+        // Show player control when songs are available
+        if (filteredSongs.isNotEmpty()) {
+            binding.playerControlView.visibility = View.VISIBLE
+        }
     }
 
     private fun playSongAt(index: Int) {
