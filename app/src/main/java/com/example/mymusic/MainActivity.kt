@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
                             updateNowPlayingInfoImmediate(song)
                         } else {
                             // Song not in filtered list - could have been filtered out
-                            Log.w("MainActivity", "Playing song not found in filtered list")
+                            Log.w("MainActivity", "Playing song not found in filtered list, clearing current song and hiding player")
                             currentPlayingSong = null
                             hidePlayerControlView()
                         }
@@ -132,10 +132,10 @@ class MainActivity : AppCompatActivity() {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
                     
-                    // Keep player control visible when playing or paused (if has content)
-                    if (currentPlayingSong != null && (isPlaying || player.currentMediaItemIndex >= 0)) {
+                    // Keep player control visible when we have a valid song
+                    if (currentPlayingSong != null) {
                         binding.playerControlView.visibility = View.VISIBLE
-                    } else if (!isPlaying && currentPlayingSong == null) {
+                    } else if (!isPlaying) {
                         // Hide if no song is loaded and not playing
                         hidePlayerControlView()
                     }
@@ -353,7 +353,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Show player control if we have a valid current song
-        if (currentPlayingSong != null && player.currentMediaItemIndex >= 0) {
+        if (currentPlayingSong != null) {
             binding.playerControlView.visibility = View.VISIBLE
         }
     }
