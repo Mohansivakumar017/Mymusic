@@ -112,6 +112,38 @@ Each theme provides a complete visual overhaul:
 - **Target SDK**: Android 14 (API 35)
 - **Recommended**: Android 10+ for best experience
 
+## Testing 🧪
+
+The project includes comprehensive test coverage:
+
+### Test Suite
+- **26 Unit Tests** - Testing theme logic, data models, and business logic
+- **Instrumented Tests** - Testing theme persistence and Android components
+- **Code Coverage** - JaCoCo integration for coverage reporting
+- **CI/CD** - Automated testing via GitHub Actions
+
+### Running Tests
+```bash
+# Run all unit tests
+./run-tests.sh test
+
+# Generate coverage report
+./run-tests.sh coverage
+
+# Run all checks (build, test, lint)
+./run-tests.sh check
+```
+
+See [TESTING.md](TESTING.md) for detailed testing documentation.
+
+## Continuous Integration 🔄
+
+This project uses GitHub Actions for automated testing and builds:
+- ✅ Automated builds on every push
+- ✅ Unit tests execution
+- ✅ Lint checks
+- ✅ Test reports and artifacts
+
 ## Future Enhancements 🚧
 
 Potential features for future releases:
