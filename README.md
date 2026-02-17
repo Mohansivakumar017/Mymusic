@@ -7,19 +7,19 @@ A beautiful Android music player with multiple theme options inspired by popular
 ### 🎨 Multiple Themes
 The app now includes three beautiful themes to choose from:
 
-1. **Spotify Theme** (Default)
+1. **Dark Green Theme** (Default)
    - Dark background with green accents
    - Perfect for night listening
-   - Inspired by Spotify's iconic design
+   - Themed color scheme inspired by popular music apps
 
-2. **Apple Music Theme**
+2. **Light Red Theme**
    - Light and vibrant design with red accents
    - Gradient backgrounds for a premium feel
-   - Inspired by Apple Music's modern interface
+   - Themed color scheme inspired by popular music apps
 
-3. **iOS Glass Theme**
-   - Clean, minimalist iOS-style design
-   - Frosted glass effect aesthetic
+3. **Minimalist Blue Theme**
+   - Clean, minimalist design
+   - Light gray aesthetic
    - Light colors with blue accents
 
 ### 🔍 Search Functionality
@@ -47,7 +47,7 @@ The app now includes three beautiful themes to choose from:
 ### Selecting a Theme
 1. Tap the **menu icon** (three dots) in the top right
 2. Select **"Themes"**
-3. Choose from Spotify, Apple Music, or iOS Glass themes
+3. Choose from Dark Green, Light Red, or Minimalist Blue themes
 4. The app will automatically restart with your new theme!
 
 ### Searching for Music
@@ -75,9 +75,9 @@ The app now includes three beautiful themes to choose from:
 Each theme provides a complete visual overhaul:
 
 ### Color Schemes
-- **Spotify**: Dark (#121212) with Spotify Green (#1DB954)
-- **Apple Music**: Light (#FAFAFA) with Apple Red (#FC3C44)
-- **iOS Glass**: iOS Gray (#F2F2F7) with iOS Blue (#007AFF)
+- **Dark Green**: Dark background (#121212) with green accents (#1DB954)
+- **Light Red**: Light background (#FAFAFA) with red accents (#FC3C44)
+- **Minimalist Blue**: Light gray background (#F2F2F7) with blue accents (#007AFF)
 
 ### Visual Elements
 - Custom background colors
@@ -165,4 +165,4 @@ This project is open source and available for educational purposes.
 ## Credits
 
 Developed with ❤️ using modern Android development practices.
-Inspired by Spotify, Apple Music, and iOS design guidelines.
+Themed color schemes inspired by popular music apps.

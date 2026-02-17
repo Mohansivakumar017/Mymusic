@@ -10,6 +10,10 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -20,7 +24,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
 import com.example.mymusic.databinding.ActivityMainBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +39,12 @@ class MainActivity : AppCompatActivity() {
     private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
     private var currentSortMode = SortMode.BY_NAME
+    
+    // Now Playing UI components
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private var currentSong: Song? = null
+    private val progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private lateinit var progressUpdateRunnable: Runnable
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -71,18 +83,23 @@ class MainActivity : AppCompatActivity() {
 
         try {
             player = ExoPlayer.Builder(this).build()
-            binding.playerControlView.player = player
             
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
-                    // You could update UI here to highlight the playing song in the list
+                    updateNowPlayingUI()
+                }
+                
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    super.onIsPlayingChanged(isPlaying)
+                    updatePlayPauseButtons()
                 }
             })
         } catch (e: Exception) {
             Log.e("MainActivity", "Error initializing player", e)
         }
 
+        setupNowPlayingUI()
         setupRecyclerView()
         setupButtons()
         checkPermissionAndLoad()
@@ -246,9 +263,216 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        progressHandler.removeCallbacks(progressUpdateRunnable)
         if (::player.isInitialized) {
             player.release()
         }
+    }
+    
+    private fun setupNowPlayingUI() {
+        // Setup bottom sheet behavior
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.nowPlayingContainer)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetBehavior.isHideable = true
+        
+        // Mini player click to expand
+        binding.miniPlayerContainer.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+        
+        // Collapse button
+        val collapseButton = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.btn_collapse)
+        collapseButton.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+        
+        // Setup playback controls for mini player
+        val miniPlayPause = binding.miniPlayerContainer.findViewById<ImageButton>(R.id.mini_play_pause)
+        miniPlayPause.setOnClickListener {
+            if (player.isPlaying) {
+                player.pause()
+            } else {
+                player.play()
+            }
+        }
+        
+        // Setup playback controls for full player
+        val fullPlayPause = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_play_pause)
+        fullPlayPause.setOnClickListener {
+            if (player.isPlaying) {
+                player.pause()
+            } else {
+                player.play()
+            }
+        }
+        
+        val fullPrevious = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_previous)
+        fullPrevious.setOnClickListener {
+            if (player.hasPreviousMediaItem()) {
+                player.seekToPreviousMediaItem()
+            }
+        }
+        
+        val fullNext = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_next)
+        fullNext.setOnClickListener {
+            if (player.hasNextMediaItem()) {
+                player.seekToNextMediaItem()
+            }
+        }
+        
+        val fullShuffle = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_shuffle)
+        fullShuffle.setOnClickListener {
+            player.shuffleModeEnabled = !player.shuffleModeEnabled
+            updateShuffleButton()
+        }
+        
+        val fullRepeat = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_repeat)
+        fullRepeat.setOnClickListener {
+            player.repeatMode = when (player.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+            updateRepeatButton()
+        }
+        
+        // Setup progress bar to control player
+        val progressBar = binding.nowPlayingContainer.findViewById<androidx.media3.ui.DefaultTimeBar>(R.id.full_progress_bar)
+        progressBar.addListener(object : androidx.media3.ui.TimeBar.OnScrubListener {
+            override fun onScrubStart(timeBar: androidx.media3.ui.TimeBar, position: Long) {
+            }
+            
+            override fun onScrubMove(timeBar: androidx.media3.ui.TimeBar, position: Long) {
+            }
+            
+            override fun onScrubStop(timeBar: androidx.media3.ui.TimeBar, position: Long, canceled: Boolean) {
+                if (!canceled) {
+                    player.seekTo(position)
+                }
+            }
+        })
+        
+        // Start updating progress
+        updateProgress()
+        
+        // Bottom sheet callback
+        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                when (newState) {
+                    BottomSheetBehavior.STATE_HIDDEN -> {
+                        binding.nowPlayingContainer.visibility = View.GONE
+                    }
+                    else -> {
+                        binding.nowPlayingContainer.visibility = View.VISIBLE
+                    }
+                }
+            }
+            
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                // Optional: Implement fade effect or other animations
+            }
+        })
+    }
+    
+    private fun updateProgress() {
+        val progressBar = binding.nowPlayingContainer.findViewById<androidx.media3.ui.DefaultTimeBar>(R.id.full_progress_bar)
+        val currentTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_current_time)
+        val totalTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_total_time)
+        
+        progressUpdateRunnable = object : Runnable {
+            override fun run() {
+                if (::player.isInitialized) {
+                    val position = player.currentPosition
+                    val duration = player.duration
+                    
+                    progressBar.setPosition(position)
+                    progressBar.setDuration(duration)
+                    
+                    currentTime.text = formatTime(position)
+                    totalTime.text = formatTime(duration)
+                }
+                progressHandler.postDelayed(this, 500)
+            }
+        }
+        progressHandler.post(progressUpdateRunnable)
+    }
+    
+    private fun formatTime(millis: Long): String {
+        if (millis < 0) return "0:00"
+        val seconds = (millis / 1000).toInt()
+        val minutes = seconds / 60
+        val remainingSeconds = seconds % 60
+        return String.format("%d:%02d", minutes, remainingSeconds)
+    }
+    
+    private fun updateNowPlayingUI() {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex >= 0 && currentIndex < songs.size) {
+            currentSong = songs[currentIndex]
+            currentSong?.let { song ->
+                // Show mini player
+                binding.miniPlayerContainer.visibility = View.VISIBLE
+                
+                // Update mini player
+                val miniTitle = binding.miniPlayerContainer.findViewById<TextView>(R.id.mini_song_title)
+                val miniArtist = binding.miniPlayerContainer.findViewById<TextView>(R.id.mini_song_artist)
+                val miniAlbumArt = binding.miniPlayerContainer.findViewById<ImageView>(R.id.mini_album_art)
+                
+                miniTitle.text = song.title
+                miniArtist.text = song.artist
+                miniAlbumArt.load(song.getAlbumArtUri()) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_music_note)
+                    error(R.drawable.ic_music_note)
+                }
+                
+                // Update full player
+                val fullTitle = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_title)
+                val fullArtist = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_artist)
+                val fullAlbum = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_album)
+                val fullAlbumArt = binding.nowPlayingContainer.findViewById<ImageView>(R.id.full_album_art)
+                
+                fullTitle.text = song.title
+                fullArtist.text = song.artist
+                fullAlbum.text = song.album
+                fullAlbumArt.load(song.getAlbumArtUri()) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_music_note)
+                    error(R.drawable.ic_music_note)
+                }
+                
+                updatePlayPauseButtons()
+                updateShuffleButton()
+                updateRepeatButton()
+            }
+        }
+    }
+    
+    private fun updatePlayPauseButtons() {
+        val isPlaying = player.isPlaying
+        val miniPlayPause = binding.miniPlayerContainer.findViewById<ImageButton>(R.id.mini_play_pause)
+        val fullPlayPause = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_play_pause)
+        
+        val iconRes = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+        miniPlayPause.setImageResource(iconRes)
+        fullPlayPause.setImageResource(iconRes)
+    }
+    
+    private fun updateShuffleButton() {
+        val fullShuffle = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_shuffle)
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = if (player.shuffleModeEnabled) colors.primary else colors.onSurface
+        fullShuffle.setColorFilter(tint)
+    }
+    
+    private fun updateRepeatButton() {
+        val fullRepeat = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_repeat)
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = when (player.repeatMode) {
+            Player.REPEAT_MODE_OFF -> colors.onSurface
+            else -> colors.primary
+        }
+        fullRepeat.setColorFilter(tint)
     }
     
     private fun applyTheme() {
@@ -259,7 +483,12 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.setBackgroundColor(colors.surface)
         binding.toolbar.setTitleTextColor(colors.onBackground)
         binding.sortBar.setBackgroundColor(colors.surface)
-        binding.playerControlContainer.setBackgroundColor(colors.surface)
+        
+        // Apply theme to mini player
+        binding.miniPlayerContainer.setBackgroundColor(colors.surface)
+        
+        // Apply theme to now playing screen
+        binding.nowPlayingContainer.setBackgroundColor(colors.background)
         
         // Apply status bar color
         window.statusBarColor = colors.primaryDark
@@ -271,6 +500,7 @@ class MainActivity : AppCompatActivity() {
                 intArrayOf(colors.gradientStart, colors.gradientEnd)
             )
             binding.root.background = gradientDrawable
+            binding.nowPlayingContainer.background = gradientDrawable
         }
         
         // Update button colors

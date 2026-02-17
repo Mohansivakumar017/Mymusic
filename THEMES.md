@@ -1,7 +1,7 @@
 # Theme System Documentation
 
 ## Overview
-The My Music app features a comprehensive theme system that allows users to switch between different visual styles inspired by popular music apps.
+The My Music app features a comprehensive theme system that allows users to switch between different visual styles with themed color schemes.
 
 ## Architecture
 
@@ -112,20 +112,20 @@ private fun applyTheme() {
 
 ## Current Themes
 
-### Spotify Theme
+### Dark Green Theme
 - **Colors**: Dark background (#121212), Green accent (#1DB954)
 - **Style**: Modern dark theme, high contrast
 - **Best for**: Night listening, battery saving
 
-### Apple Music Theme  
+### Light Red Theme  
 - **Colors**: Light background (#FAFAFA), Red accent (#FC3C44)
 - **Style**: Light and vibrant with gradients
 - **Best for**: Daytime use, colorful interface
 
-### iOS Glass Theme
+### Minimalist Blue Theme
 - **Colors**: Light gray (#F2F2F7), Blue accent (#007AFF)
-- **Style**: Clean, minimalist iOS design
-- **Best for**: iOS users, clean aesthetic
+- **Style**: Clean, minimalist design
+- **Best for**: Clean aesthetic, modern look
 
 ## Theme Persistence
 
@@ -148,5 +148,5 @@ Potential improvements to the theme system:
 - Dynamic color generation from album art
 - User-customizable themes
 - Dark/Light mode auto-switching
-- More theme presets (YouTube Music, Tidal, etc.)
+- More theme presets with different color schemes
 - Theme scheduling (auto-switch based on time)
