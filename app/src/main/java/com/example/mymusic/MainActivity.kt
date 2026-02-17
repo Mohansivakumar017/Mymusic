@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     
     // MediaSession for notifications and lock screen
     private var mediaSession: MediaSession? = null
+    private var notificationHelper: NotificationHelper? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -160,12 +161,9 @@ class MainActivity : AppCompatActivity() {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
                     
-                    // Keep player control always visible when songs are available
-                    if (filteredSongs.isNotEmpty()) {
-                        binding.playerControlView.visibility = View.VISIBLE
-                    } else {
-                        hidePlayerControlView()
-                    }
+                    // Keep player control always visible when any songs exist in library
+                    // Don't hide it even if filteredSongs is empty due to search/filter
+                    updatePlayerControlVisibility()
                 }
             })
             
@@ -343,6 +341,8 @@ class MainActivity : AppCompatActivity() {
             currentSortMode = SortMode.BY_NAME // Ensure default sort
             applySorting() // Apply default sort
             updatePlayerPlaylist()
+            // Show controller permanently once songs are loaded
+            updatePlayerControlVisibility()
         } else {
             Toast.makeText(this, "No songs found", Toast.LENGTH_SHORT).show()
         }
@@ -396,15 +396,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePlayerPlaylist() {
-        val mediaItems = filteredSongs.map { MediaItem.fromUri(it.path) }
+        val mediaItems = filteredSongs.map { it.toMediaItem() }
         player.setMediaItems(mediaItems)
         player.prepare()
     }
 
     private fun updatePlayerWithFilteredSongs() {
-        if (filteredSongs.isEmpty()) {
+        // Don't hide the controller even if filteredSongs is empty
+        // Keep it visible as long as songs exist in the library
+        if (songs.isEmpty()) {
             currentPlayingSong = null
             hidePlayerControlView()
+            return
+        }
+        
+        if (filteredSongs.isEmpty()) {
+            // Filtered list is empty but library has songs
+            // Stop playback but keep controller visible
+            player.stop()
+            player.clearMediaItems()
+            currentPlayingSong = null
+            updatePlayerControlVisibility()
             return
         }
         
@@ -416,7 +428,7 @@ class MainActivity : AppCompatActivity() {
         } else null
         
         // Update player with filtered songs
-        val mediaItems = filteredSongs.map { MediaItem.fromUri(it.path) }
+        val mediaItems = filteredSongs.map { it.toMediaItem() }
         player.setMediaItems(mediaItems)
         player.prepare()
         
@@ -464,6 +476,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         progressHandler.removeCallbacks(progressUpdateRunnable)
         sleepTimerManager.cancelTimer()
+        notificationHelper?.release()
         mediaSession?.release()
         if (::player.isInitialized) {
             player.release()
@@ -702,6 +715,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun updatePlayerControlVisibility() {
+        // Keep controller visible as long as songs exist in the library
+        // Hide it only when library is completely empty
+        if (songs.isNotEmpty()) {
+            binding.playerControlView.visibility = View.VISIBLE
+        } else {
+            hidePlayerControlView()
+        }
+    }
+    
     private fun updateNowPlayingInfoImmediate(song: Song) {
         // Make the player control view visible
         binding.playerControlView.visibility = View.VISIBLE
@@ -897,6 +920,9 @@ class MainActivity : AppCompatActivity() {
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(sessionActivityPendingIntent)
             .build()
+        
+        // Initialize notification helper to show media notifications
+        notificationHelper = NotificationHelper(this, player, mediaSession!!)
     }
     
     // Favorites functionality

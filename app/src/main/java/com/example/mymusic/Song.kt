@@ -1,6 +1,8 @@
 package com.example.mymusic
 
 import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 
 data class Song(
     val id: Long,
@@ -14,5 +16,18 @@ data class Song(
 ) {
     fun getAlbumArtUri(): Uri {
         return Uri.parse("content://media/external/audio/albumart/$albumId")
+    }
+    
+    fun toMediaItem(): MediaItem {
+        return MediaItem.Builder()
+            .setUri(path)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setArtist(artist)
+                    .setAlbumTitle(album)
+                    .build()
+            )
+            .build()
     }
 }

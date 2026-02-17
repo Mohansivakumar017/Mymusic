@@ -63,7 +63,8 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_favorite_border"
             android:contentDescription="@string/favorite"
-            android:layout_marginEnd="4dp" />
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
         
         <ImageButton
             android:id="@+id/btn_shuffle"
@@ -119,10 +120,38 @@
             android:layout_marginStart="4dp" />
     </LinearLayout>
 
-    <!-- Progress bar -->
-    <androidx.media3.ui.DefaultTimeBar
-        android:id="@id/exo_progress"
+    <!-- Progress bar with time labels -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="26dp"
-        android:layout_marginTop="4dp" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp">
+        
+        <TextView
+            android:id="@id/exo_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/on_surface"
+            android:paddingEnd="8dp"
+            android:paddingStart="0dp"
+            android:text="0:00" />
+        
+        <androidx.media3.ui.DefaultTimeBar
+            android:id="@id/exo_progress"
+            android:layout_width="0dp"
+            android:layout_height="26dp"
+            android:layout_weight="1" />
+        
+        <TextView
+            android:id="@id/exo_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@color/on_surface"
+            android:paddingStart="8dp"
+            android:paddingEnd="0dp"
+            android:text="0:00" />
+    </LinearLayout>
 </LinearLayout>
