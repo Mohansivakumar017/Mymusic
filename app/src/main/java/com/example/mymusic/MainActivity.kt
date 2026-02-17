@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     // Now Playing UI components
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private var currentSong: Song? = null
+    private var currentPlayingSong: Song? = null
     private val progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private lateinit var progressUpdateRunnable: Runnable
     
@@ -104,13 +105,24 @@ class MainActivity : AppCompatActivity() {
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
+                    
+                    // Update current playing song when media item changes
+                    val currentIndex = player.currentMediaItemIndex
+                    if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
+                        currentPlayingSong = filteredSongs[currentIndex]
+                        currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
+                    }
                     updateNowPlayingUI()
-                    updateNowPlayingInfo()
                 }
                 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     super.onIsPlayingChanged(isPlaying)
                     updatePlayPauseButtons()
+                    
+                    // Keep player control visible when playing
+                    if (isPlaying) {
+                        binding.playerControlView.visibility = View.VISIBLE
+                    }
                 }
             })
             
@@ -312,12 +324,19 @@ class MainActivity : AppCompatActivity() {
     private fun playSongAt(index: Int) {
         if (index !in filteredSongs.indices) return
         
+        // Store the song that's about to play
+        currentPlayingSong = filteredSongs[index]
+        
         try {
             player.seekTo(index, 0)
             player.play()
             
-            // Show the bottom sheet when a song starts
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            // Immediately update the UI with correct song info
+            currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
+            
+            // Show the player control view
+            binding.playerControlView.visibility = View.VISIBLE
+            
         } catch (e: Exception) {
             Log.e("MainActivity", "Error playing song", e)
             Toast.makeText(this, "Error playing song", Toast.LENGTH_SHORT).show()
@@ -332,15 +351,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    override fun onPause() {
+        super.onPause()
+        // Save player state
+        if (::player.isInitialized && currentPlayingSong != null) {
+            val prefs = getSharedPreferences("MusicPlayerPrefs", MODE_PRIVATE)
+            prefs.edit().apply {
+                putBoolean("wasPlaying", player.isPlaying)
+                putInt("lastPosition", player.currentPosition.toInt())
+                putLong("lastSongId", currentPlayingSong?.id ?: -1L)
+                apply()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Restore player visibility if music was playing
+        if (::player.isInitialized && player.currentMediaItemIndex >= 0) {
+            binding.playerControlView.visibility = View.VISIBLE
+            updateNowPlayingInfo()
+        }
+    }
+    
     private fun setupNowPlayingUI() {
         // Setup bottom sheet behavior
         bottomSheetBehavior = BottomSheetBehavior.from(nowPlayingBinding.root)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.isHideable = true
         
-        // Mini player click to expand
-        binding.miniPlayerContainer.setOnClickListener {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        // PlayerControlView click to expand bottom sheet
+        binding.playerControlView.setOnClickListener {
+            if (player.isPlaying || player.currentMediaItemIndex >= 0) {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
         }
         
         // Collapse button
@@ -348,7 +392,7 @@ class MainActivity : AppCompatActivity() {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
         
-        // Setup playback controls for mini player
+        // Setup playback controls for mini player (kept for compatibility)
         miniPlayerBinding.miniPlayPause.setOnClickListener {
             if (player.isPlaying) {
                 player.pause()
@@ -369,18 +413,31 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullPrevious.setOnClickListener {
             if (player.hasPreviousMediaItem()) {
                 player.seekToPreviousMediaItem()
+                // Update current playing song
+                val newIndex = player.currentMediaItemIndex
+                if (newIndex >= 0 && newIndex < filteredSongs.size) {
+                    currentPlayingSong = filteredSongs[newIndex]
+                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
+                }
             }
         }
         
         nowPlayingBinding.fullNext.setOnClickListener {
             if (player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
+                // Update current playing song
+                val newIndex = player.currentMediaItemIndex
+                if (newIndex >= 0 && newIndex < filteredSongs.size) {
+                    currentPlayingSong = filteredSongs[newIndex]
+                    currentPlayingSong?.let { updateNowPlayingInfoImmediate(it) }
+                }
             }
         }
         
         nowPlayingBinding.fullShuffle.setOnClickListener {
             player.shuffleModeEnabled = !player.shuffleModeEnabled
             updateShuffleButton()
+            Toast.makeText(this, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
         }
         
         nowPlayingBinding.fullRepeat.setOnClickListener {
@@ -410,14 +467,15 @@ class MainActivity : AppCompatActivity() {
         // Start updating progress
         updateProgress()
         
-        // Bottom sheet callback
+        // Bottom sheet callback - FIXED: Don't hide PlayerControlView
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                // No action needed - bottom sheet visibility is managed by the layout
+                // Don't change visibility - PlayerControlView stays visible
+                // Only the bottom sheet (full player) expands/collapses
             }
             
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // No animation needed
+                // Optional: Implement fade effect or other animations
             }
         })
     }
@@ -494,23 +552,41 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullRepeat.setColorFilter(tint)
     }
     
+    private fun updateNowPlayingInfoImmediate(song: Song) {
+        // Make the player control view visible
+        binding.playerControlView.visibility = View.VISIBLE
+        
+        // Update song info in PlayerControlView
+        nowPlayingTitle?.text = song.title
+        nowPlayingArtist?.text = song.artist
+        nowPlayingAlbumArt?.load(song.getAlbumArtUri()) {
+            placeholder(R.drawable.ic_music_note)
+            error(R.drawable.ic_music_note)
+            transformations(RoundedCornersTransformation(12f))
+        }
+        
+        // Update song info in full player (bottom sheet)
+        nowPlayingBinding.fullSongTitle.text = song.title
+        nowPlayingBinding.fullSongArtist.text = song.artist
+        nowPlayingBinding.fullAlbumArt.load(song.getAlbumArtUri()) {
+            placeholder(R.drawable.ic_music_note)
+            error(R.drawable.ic_music_note)
+        }
+    }
+    
     private fun updateNowPlayingInfo() {
-        val currentIndex = player.currentMediaItemIndex
-        if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
-            val currentSong = filteredSongs[currentIndex]
-            
-            // Make the player control view visible
-            binding.playerControlView.visibility = View.VISIBLE
-            
-            // Update song info
-            nowPlayingTitle?.text = currentSong.title
-            nowPlayingArtist?.text = currentSong.artist
-            nowPlayingAlbumArt?.load(currentSong.getAlbumArtUri()) {
-                placeholder(R.drawable.ic_music_note)
-                error(R.drawable.ic_music_note)
-                transformations(RoundedCornersTransformation(12f))
+        // Use the stored current playing song instead of index
+        val song = currentPlayingSong ?: run {
+            // Fallback to index-based if currentPlayingSong is not set
+            val currentIndex = player.currentMediaItemIndex
+            if (currentIndex >= 0 && currentIndex < filteredSongs.size) {
+                filteredSongs[currentIndex]
+            } else {
+                return
             }
         }
+        
+        updateNowPlayingInfoImmediate(song)
     }
     
     private fun applyTheme() {
