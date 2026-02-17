@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation("androidx.media3:media3-session:1.2.1")
     implementation(libs.google.material)
     implementation(libs.coil.base)
 

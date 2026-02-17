@@ -10,7 +10,8 @@ import com.example.mymusic.databinding.ItemSongBinding
 class SongAdapter(
     private val songs: List<Song>,
     private val theme: ThemeType = ThemeType.SPOTIFY,
-    private val onSongClick: (Int) -> Unit
+    private val onSongClick: (Int) -> Unit,
+    private val onSongLongClick: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
     class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root)
@@ -42,6 +43,10 @@ class SongAdapter(
         }
 
         holder.itemView.setOnClickListener { onSongClick(position) }
+        holder.itemView.setOnLongClickListener { 
+            onSongLongClick?.invoke(position)
+            true
+        }
     }
 
     override fun getItemCount() = songs.size

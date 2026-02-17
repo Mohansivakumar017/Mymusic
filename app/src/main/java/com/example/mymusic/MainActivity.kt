@@ -22,6 +22,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import coil.transform.RoundedCornersTransformation
@@ -40,9 +41,14 @@ class MainActivity : AppCompatActivity() {
     private val filteredSongs = mutableListOf<Song>()
     private lateinit var adapter: SongAdapter
     private lateinit var themeManager: ThemeManager
+    private lateinit var favoritesManager: FavoritesManager
+    private lateinit var playlistManager: PlaylistManager
+    private lateinit var sleepTimerManager: SleepTimerManager
     private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
     private var currentSortMode = SortMode.BY_NAME
+    private var currentViewMode = ViewMode.ALL_SONGS
+    private var currentPlaylistId: Long? = null
     
     // Now Playing UI components
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
@@ -54,6 +60,11 @@ class MainActivity : AppCompatActivity() {
     private var nowPlayingTitle: TextView? = null
     private var nowPlayingArtist: TextView? = null
     private var nowPlayingAlbumArt: ImageView? = null
+    private var favoriteButton: ImageView? = null
+    private var sleepTimerButton: ImageView? = null
+    
+    // MediaSession for notifications and lock screen
+    private var mediaSession: MediaSession? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -81,6 +92,11 @@ class MainActivity : AppCompatActivity() {
         themeManager = ThemeManager(this)
         currentTheme = themeManager.getTheme()
         
+        // Initialize favorites and playlist managers
+        favoritesManager = FavoritesManager(this)
+        playlistManager = PlaylistManager(this)
+        sleepTimerManager = SleepTimerManager()
+        
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
@@ -97,6 +113,9 @@ class MainActivity : AppCompatActivity() {
 
         try {
             player = ExoPlayer.Builder(this).build()
+            
+            // Setup MediaSession for notifications and lock screen
+            setupMediaSession()
             
             // Set player to PlayerControlView
             binding.playerControlView.player = player
@@ -147,6 +166,21 @@ class MainActivity : AppCompatActivity() {
                 nowPlayingTitle = binding.playerControlView.findViewById(R.id.now_playing_title)
                 nowPlayingArtist = binding.playerControlView.findViewById(R.id.now_playing_artist)
                 nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.now_playing_album_art)
+                favoriteButton = binding.playerControlView.findViewById(R.id.btn_favorite)
+                sleepTimerButton = binding.playerControlView.findViewById(R.id.btn_sleep_timer)
+                
+                // Setup favorite button click
+                favoriteButton?.setOnClickListener {
+                    currentPlayingSong?.let { song ->
+                        toggleFavorite(song)
+                    }
+                }
+                
+                // Setup sleep timer button click
+                sleepTimerButton?.setOnClickListener {
+                    showSleepTimerDialog()
+                }
+                
                 // Update now playing info will be called after songs load
             }
         } catch (e: Exception) {
@@ -165,9 +199,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         filteredSongs.addAll(songs)
-        adapter = SongAdapter(filteredSongs, currentTheme) { position ->
-            playSongAt(position)
-        }
+        adapter = SongAdapter(
+            songs = filteredSongs,
+            theme = currentTheme,
+            onSongClick = { position -> playSongAt(position) },
+            onSongLongClick = { position -> 
+                val song = filteredSongs[position]
+                showSongOptionsDialog(song)
+            }
+        )
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
     }
@@ -377,6 +417,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         progressHandler.removeCallbacks(progressUpdateRunnable)
+        sleepTimerManager.cancelTimer()
+        mediaSession?.release()
         if (::player.isInitialized) {
             player.release()
         }
@@ -468,6 +510,18 @@ class MainActivity : AppCompatActivity() {
                 else -> Player.REPEAT_MODE_OFF
             }
             updateRepeatButton()
+        }
+        
+        // Setup favorite button
+        nowPlayingBinding.fullFavorite.setOnClickListener {
+            currentPlayingSong?.let { song ->
+                toggleFavorite(song)
+            }
+        }
+        
+        // Setup sleep timer button
+        nowPlayingBinding.fullSleepTimer.setOnClickListener {
+            showSleepTimerDialog()
         }
         
         // Setup progress bar to control player
@@ -598,6 +652,10 @@ class MainActivity : AppCompatActivity() {
             transformations(RoundedCornersTransformation(12f))
         }
         
+        // Update favorite button
+        val isFavorite = favoritesManager.isFavorite(song.id)
+        updateFavoriteButton(isFavorite)
+        
         // Update song info in full player (bottom sheet)
         nowPlayingBinding.fullSongTitle.text = song.title
         nowPlayingBinding.fullSongArtist.text = song.artist
@@ -660,9 +718,15 @@ class MainActivity : AppCompatActivity() {
         
         // Recreate adapter to apply theme to items
         if (::adapter.isInitialized) {
-            adapter = SongAdapter(filteredSongs, currentTheme) { position ->
-                playSongAt(position)
-            }
+            adapter = SongAdapter(
+                songs = filteredSongs,
+                theme = currentTheme,
+                onSongClick = { position -> playSongAt(position) },
+                onSongLongClick = { position -> 
+                    val song = filteredSongs[position]
+                    showSongOptionsDialog(song)
+                }
+            )
             binding.recyclerView.adapter = adapter
         }
     }
@@ -681,6 +745,18 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_search -> {
                 showSearchDialog()
+                true
+            }
+            R.id.action_favorites -> {
+                showFavorites()
+                true
+            }
+            R.id.action_playlists -> {
+                showPlaylistsDialog()
+                true
+            }
+            R.id.action_all_songs -> {
+                showAllSongs()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -743,5 +819,272 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         updatePlayerWithFilteredSongs()
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
+    }
+    
+    // MediaSession setup for notifications and lock screen
+    private fun setupMediaSession() {
+        val sessionActivityIntent = Intent(this, MainActivity::class.java)
+        val sessionActivityPendingIntent = android.app.PendingIntent.getActivity(
+            this,
+            0,
+            sessionActivityIntent,
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(sessionActivityPendingIntent)
+            .build()
+    }
+    
+    // Favorites functionality
+    private fun toggleFavorite(song: Song) {
+        val isFavorite = favoritesManager.toggleFavorite(song.id)
+        updateFavoriteButton(isFavorite)
+        
+        val message = if (isFavorite) {
+            "Added to favorites"
+        } else {
+            "Removed from favorites"
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun updateFavoriteButton(isFavorite: Boolean) {
+        val iconRes = if (isFavorite) R.drawable.ic_favorite else R.drawable.ic_favorite_border
+        favoriteButton?.setImageResource(iconRes)
+        nowPlayingBinding.fullFavorite.setImageResource(iconRes)
+        
+        // Update button color
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = if (isFavorite) colors.primary else colors.onSurface
+        favoriteButton?.setColorFilter(tint)
+        nowPlayingBinding.fullFavorite.setColorFilter(tint)
+    }
+    
+    private fun showFavorites() {
+        currentViewMode = ViewMode.FAVORITES
+        currentPlaylistId = null
+        isSearching = false
+        
+        val favoriteIds = favoritesManager.getFavorites()
+        filteredSongs.clear()
+        filteredSongs.addAll(songs.filter { favoriteIds.contains(it.id) })
+        
+        applySorting()
+        
+        supportActionBar?.title = getString(R.string.favorites)
+        Toast.makeText(this, "Showing ${filteredSongs.size} favorite songs", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun showAllSongs() {
+        currentViewMode = ViewMode.ALL_SONGS
+        currentPlaylistId = null
+        isSearching = false
+        
+        filteredSongs.clear()
+        filteredSongs.addAll(songs)
+        
+        applySorting()
+        
+        supportActionBar?.title = getString(R.string.app_name)
+        Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
+    }
+    
+    // Playlist functionality
+    private fun showPlaylistsDialog() {
+        val playlists = playlistManager.getPlaylists()
+        val playlistNames = playlists.map { it.name }.toMutableList()
+        playlistNames.add(0, "+ Create New Playlist")
+        
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.playlists))
+        
+        builder.setItems(playlistNames.toTypedArray()) { _, which ->
+            if (which == 0) {
+                // Create new playlist
+                showCreatePlaylistDialog()
+            } else {
+                // Show playlist
+                val playlist = playlists[which - 1]
+                showPlaylist(playlist)
+            }
+        }
+        
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        builder.show()
+    }
+    
+    private fun showCreatePlaylistDialog() {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.create_playlist))
+        
+        val input = android.widget.EditText(this)
+        input.hint = getString(R.string.playlist_name)
+        val paddingHorizontal = resources.getDimensionPixelSize(R.dimen.search_input_padding_horizontal)
+        val paddingVertical = resources.getDimensionPixelSize(R.dimen.search_input_padding_vertical)
+        input.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical)
+        builder.setView(input)
+        
+        builder.setPositiveButton("Create") { _, _ ->
+            val name = input.text.toString().trim()
+            if (name.isNotEmpty()) {
+                val playlist = playlistManager.createPlaylist(name)
+                Toast.makeText(this, "Playlist '$name' created", Toast.LENGTH_SHORT).show()
+                showPlaylist(playlist)
+            } else {
+                Toast.makeText(this, "Playlist name cannot be empty", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.cancel()
+        }
+        
+        builder.show()
+    }
+    
+    private fun showPlaylist(playlist: Playlist) {
+        currentViewMode = ViewMode.PLAYLIST
+        currentPlaylistId = playlist.id
+        isSearching = false
+        
+        filteredSongs.clear()
+        filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
+        
+        applySorting()
+        
+        supportActionBar?.title = playlist.name
+        Toast.makeText(this, "Showing ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun showAddToPlaylistDialog(song: Song) {
+        val playlists = playlistManager.getPlaylists()
+        if (playlists.isEmpty()) {
+            Toast.makeText(this, "No playlists. Create one first!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val playlistNames = playlists.map { it.name }.toTypedArray()
+        
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.add_to_playlist))
+        
+        builder.setItems(playlistNames) { _, which ->
+            val playlist = playlists[which]
+            playlistManager.addSongToPlaylist(playlist.id, song.id)
+            Toast.makeText(this, "Added to ${playlist.name}", Toast.LENGTH_SHORT).show()
+        }
+        
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        builder.show()
+    }
+    
+    // Sleep timer functionality
+    private fun showSleepTimerDialog() {
+        val options = arrayOf("15 minutes", "30 minutes", "45 minutes", "1 hour", "Cancel timer")
+        val minutes = arrayOf(15, 30, 45, 60, 0)
+        
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.sleep_timer))
+        
+        builder.setItems(options) { _, which ->
+            val selectedMinutes = minutes[which]
+            if (selectedMinutes > 0) {
+                startSleepTimer(selectedMinutes)
+            } else {
+                cancelSleepTimer()
+            }
+        }
+        
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        builder.show()
+    }
+    
+    private fun startSleepTimer(minutes: Int) {
+        sleepTimerManager.startTimer(
+            durationMinutes = minutes,
+            onTick = { millisUntilFinished ->
+                // Could update UI with remaining time if needed
+            },
+            onFinish = {
+                // Pause playback when timer finishes
+                if (::player.isInitialized && player.isPlaying) {
+                    player.pause()
+                    Toast.makeText(this, "Sleep timer ended - playback paused", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+        
+        // Update sleep timer button to show it's active
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        sleepTimerButton?.setColorFilter(colors.primary)
+        nowPlayingBinding.fullSleepTimer.setColorFilter(colors.primary)
+        
+        Toast.makeText(this, getString(R.string.sleep_timer_set, minutes), Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun cancelSleepTimer() {
+        sleepTimerManager.cancelTimer()
+        
+        // Reset sleep timer button color
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        sleepTimerButton?.setColorFilter(colors.onSurface)
+        nowPlayingBinding.fullSleepTimer.setColorFilter(colors.onSurface)
+        
+        Toast.makeText(this, getString(R.string.sleep_timer_cancel), Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun showSongOptionsDialog(song: Song) {
+        val options = mutableListOf<String>()
+        options.add(if (favoritesManager.isFavorite(song.id)) "Remove from Favorites" else "Add to Favorites")
+        options.add("Add to Playlist")
+        
+        // If in playlist view, add option to remove from current playlist
+        if (currentViewMode == ViewMode.PLAYLIST && currentPlaylistId != null) {
+            options.add("Remove from Playlist")
+        }
+        
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(song.title)
+        
+        builder.setItems(options.toTypedArray()) { _, which ->
+            when (which) {
+                0 -> {
+                    // Toggle favorite
+                    toggleFavorite(song)
+                }
+                1 -> {
+                    // Add to playlist
+                    showAddToPlaylistDialog(song)
+                }
+                2 -> {
+                    // Remove from playlist (only if in playlist view)
+                    if (currentViewMode == ViewMode.PLAYLIST && currentPlaylistId != null) {
+                        playlistManager.removeSongFromPlaylist(currentPlaylistId!!, song.id)
+                        
+                        // Refresh the view
+                        val playlist = playlistManager.getPlaylists().find { it.id == currentPlaylistId }
+                        if (playlist != null) {
+                            showPlaylist(playlist)
+                        }
+                    }
+                }
+            }
+        }
+        
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        
+        builder.show()
     }
 }
