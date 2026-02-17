@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
             applySorting()
         }
         binding.btnShuffleMain.setOnClickListener {
-            if (songs.isNotEmpty()) {
+            if (filteredSongs.isNotEmpty()) {
                 // Toggle shuffle mode
                 player.shuffleModeEnabled = !player.shuffleModeEnabled
                 
@@ -285,9 +285,11 @@ class MainActivity : AppCompatActivity() {
     private fun updatePlayerWithFilteredSongs() {
         if (filteredSongs.isEmpty()) return
         
-        // Get current playing song if any
-        val currentPlayingSong = if (player.currentMediaItemIndex >= 0 && player.currentMediaItemIndex < songs.size) {
-            songs[player.currentMediaItemIndex]
+        // Get current playing song and position if any
+        val wasPlaying = player.isPlaying
+        val currentPosition = player.currentPosition
+        val currentSongPath = if (player.currentMediaItemIndex >= 0) {
+            player.currentMediaItem?.localConfiguration?.uri?.path
         } else null
         
         // Update player with filtered songs
@@ -296,11 +298,11 @@ class MainActivity : AppCompatActivity() {
         player.prepare()
         
         // If there was a song playing, try to continue it
-        if (currentPlayingSong != null) {
-            val newIndex = filteredSongs.indexOf(currentPlayingSong)
+        if (currentSongPath != null) {
+            val newIndex = filteredSongs.indexOfFirst { it.path == currentSongPath }
             if (newIndex >= 0) {
-                player.seekTo(newIndex, player.currentPosition)
-                if (player.isPlaying) {
+                player.seekTo(newIndex, currentPosition)
+                if (wasPlaying) {
                     player.play()
                 }
             }
