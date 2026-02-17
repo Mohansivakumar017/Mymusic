@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity() {
                     // Force refresh notification to ensure lock screen shows correct song info
                     // Only invalidate if we have valid metadata to prevent showing empty content
                     if (mediaItem?.mediaMetadata != null && 
-                        !mediaItem.mediaMetadata.title.isNullOrEmpty()) {
+                        !mediaItem?.mediaMetadata?.title.isNullOrEmpty()) {
                         notificationHelper?.invalidate()
                     }
                 }
