@@ -201,12 +201,8 @@ class MainActivity : AppCompatActivity() {
                     updateShuffleButton()
                     
                     // If shuffle mode is enabled, pick a random song
-                    if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
-                        val mediaItems = filteredSongs.map { it.toMediaItem() }
-                        val randomIndex = (0 until filteredSongs.size).random()
-                        player.setMediaItems(mediaItems, randomIndex, 0)
-                        player.prepare()
-                        player.play()
+                    if (player.shuffleModeEnabled) {
+                        playRandomSongFromFiltered()
                     }
                     
                     val message = if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off)
@@ -290,11 +286,7 @@ class MainActivity : AppCompatActivity() {
                 
                 // If shuffle mode is enabled, pick a random song
                 if (player.shuffleModeEnabled) {
-                    val mediaItems = filteredSongs.map { it.toMediaItem() }
-                    val randomIndex = (0 until filteredSongs.size).random()
-                    player.setMediaItems(mediaItems, randomIndex, 0)
-                    player.prepare()
-                    player.play()
+                    playRandomSongFromFiltered()
                 } else if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
                     // If shuffle is disabled and no song is playing, start from first song
                     player.seekTo(0, 0)
@@ -589,15 +581,11 @@ class MainActivity : AppCompatActivity() {
             updateShuffleButton()
             
             // If shuffle mode is enabled, pick a random song
-            if (player.shuffleModeEnabled && filteredSongs.isNotEmpty()) {
-                val mediaItems = filteredSongs.map { it.toMediaItem() }
-                val randomIndex = (0 until filteredSongs.size).random()
-                player.setMediaItems(mediaItems, randomIndex, 0)
-                player.prepare()
-                player.play()
+            if (player.shuffleModeEnabled) {
+                playRandomSongFromFiltered()
             }
             
-            Toast.makeText(this, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off), Toast.LENGTH_SHORT).show()
         }
         
         nowPlayingBinding.fullRepeat.setOnClickListener {
@@ -742,6 +730,16 @@ class MainActivity : AppCompatActivity() {
             else -> colors.primary
         }
         miniRepeatButton?.setColorFilter(tint)
+    }
+    
+    private fun playRandomSongFromFiltered() {
+        if (filteredSongs.isEmpty()) return
+        
+        val mediaItems = filteredSongs.map { it.toMediaItem() }
+        val randomIndex = (0 until filteredSongs.size).random()
+        player.setMediaItems(mediaItems, randomIndex, 0)
+        player.prepare()
+        player.play()
     }
     
     private fun hidePlayerControlView() {
