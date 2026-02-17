@@ -289,21 +289,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun applySorting() {
+    private fun performSorting() {
         when (currentSortMode) {
-            SortMode.BY_NAME -> {
-                filteredSongs.sortBy { it.title.lowercase() }
-                binding.btnSort.text = "Sort: Name ↑"
-            }
-            SortMode.BY_DATE -> {
-                filteredSongs.sortByDescending { it.dateAdded }
-                binding.btnSort.text = "Sort: Date ↓"
-            }
-            SortMode.BY_DURATION -> {
-                filteredSongs.sortByDescending { it.duration }
-                binding.btnSort.text = "Sort: Duration ↓"
-            }
+            SortMode.BY_NAME -> filteredSongs.sortBy { it.title.lowercase() }
+            SortMode.BY_ARTIST -> filteredSongs.sortBy { it.artist.lowercase() }
+            SortMode.BY_DATE -> filteredSongs.sortByDescending { it.dateAdded }
+            SortMode.BY_DURATION -> filteredSongs.sortByDescending { it.duration }
         }
+    }
+    
+    private fun applySorting() {
+        performSorting()
+        
+        // Update button text
+        when (currentSortMode) {
+            SortMode.BY_NAME -> binding.btnSort.text = "Sort: Name ↑"
+            SortMode.BY_ARTIST -> binding.btnSort.text = "Sort: Artist ↑"
+            SortMode.BY_DATE -> binding.btnSort.text = "Sort: Date ↓"
+            SortMode.BY_DURATION -> binding.btnSort.text = "Sort: Duration ↓"
+        }
+        
         adapter.notifyDataSetChanged()
         // Don't update player when sorting - the same songs are still there, just reordered
         // This prevents playback interruption/blinking when sorting
@@ -1096,12 +1101,7 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
         
         // Apply sorting to the playlist songs
-        when (currentSortMode) {
-            SortMode.BY_NAME -> filteredSongs.sortBy { it.title.lowercase() }
-            SortMode.BY_ARTIST -> filteredSongs.sortBy { it.artist.lowercase() }
-            SortMode.BY_DATE -> filteredSongs.sortByDescending { it.dateAdded }
-            SortMode.BY_DURATION -> filteredSongs.sortByDescending { it.duration }
-        }
+        performSorting()
         adapter.notifyDataSetChanged()
         
         // Only update player if current song is not in the new playlist
