@@ -1,15 +1,15 @@
 package com.example.mymusic
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -20,6 +20,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.mymusic.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -29,9 +31,12 @@ class MainActivity : AppCompatActivity() {
     private val songs = mutableListOf<Song>()
     private val filteredSongs = mutableListOf<Song>()
     private lateinit var adapter: SongAdapter
-    private lateinit var themeManager: ThemeManager
-    private var currentTheme: ThemeType = ThemeType.SPOTIFY
     private var isSearching = false
+    
+    // Now playing UI elements
+    private var nowPlayingAlbumArt: ImageView? = null
+    private var nowPlayingTitle: TextView? = null
+    private var nowPlayingArtist: TextView? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -41,41 +46,35 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
             }
         }
-    
-    private val themeSelectionLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                // Theme was changed, recreate activity
-                currentTheme = themeManager.getTheme()
-                recreate()
-            }
-        }
 
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize theme manager
-        themeManager = ThemeManager(this)
-        currentTheme = themeManager.getTheme()
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
         // Setup toolbar
         setSupportActionBar(binding.toolbar)
-        
-        // Apply theme
-        applyTheme()
 
         try {
             player = ExoPlayer.Builder(this).build()
             binding.playerControlView.player = player
             
+            // Get references to now playing UI elements
+            setupNowPlayingViews()
+            
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
-                    // You could update UI here to highlight the playing song in the list
+                    updateNowPlayingInfo()
+                }
+                
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    super.onPlaybackStateChanged(playbackState)
+                    if (playbackState == Player.STATE_READY) {
+                        updateNowPlayingInfo()
+                    }
                 }
             })
         } catch (e: Exception) {
@@ -89,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         filteredSongs.addAll(songs)
-        adapter = SongAdapter(filteredSongs, currentTheme) { position ->
+        adapter = SongAdapter(filteredSongs) { position ->
             playSongAt(position)
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
@@ -236,40 +235,49 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun applyTheme() {
-        val colors = ThemeHelper.getThemeColors(currentTheme)
-        
-        // Apply background colors
-        binding.root.setBackgroundColor(colors.background)
-        binding.toolbar.setBackgroundColor(colors.surface)
-        binding.toolbar.setTitleTextColor(colors.onBackground)
-        binding.sortBar.setBackgroundColor(colors.surface)
-        binding.playerControlContainer.setBackgroundColor(colors.surface)
-        
-        // Apply status bar color
-        window.statusBarColor = colors.primaryDark
-        
-        // Apply gradient if needed
-        if (colors.useGradient && colors.gradientStart != null && colors.gradientEnd != null) {
-            val gradientDrawable = GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(colors.gradientStart, colors.gradientEnd)
-            )
-            binding.root.background = gradientDrawable
-        }
-        
-        // Update button colors
-        binding.btnSortName.setTextColor(colors.onBackground)
-        binding.btnSortDate.setTextColor(colors.onBackground)
-        binding.btnSortDuration.setTextColor(colors.onBackground)
-        binding.btnShuffleMain.setColorFilter(colors.primary)
-        
-        // Recreate adapter to apply theme to items
-        if (::adapter.isInitialized) {
-            adapter = SongAdapter(filteredSongs, currentTheme) { position ->
-                playSongAt(position)
+    private fun setupNowPlayingViews() {
+        // Get references to the custom player control views
+        // Using post() because PlayerControlView hasn't inflated custom layout yet in onCreate
+        binding.playerControlView.post {
+            try {
+                nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.img_now_playing_album_art)
+                nowPlayingTitle = binding.playerControlView.findViewById(R.id.text_now_playing_title)
+                nowPlayingArtist = binding.playerControlView.findViewById(R.id.text_now_playing_artist)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error getting now playing views", e)
             }
-            binding.recyclerView.adapter = adapter
+        }
+    }
+    
+    private fun updateNowPlayingInfo() {
+        try {
+            val currentIndex = player.currentMediaItemIndex
+            // Player always uses the full 'songs' list, not 'filteredSongs'
+            // See playSongAt() which maps filtered indices to actual song indices
+            if (currentIndex >= 0 && currentIndex < songs.size) {
+                val currentSong = songs[currentIndex]
+                
+                // Update title
+                nowPlayingTitle?.text = currentSong.title
+                
+                // Update artist
+                nowPlayingArtist?.text = currentSong.artist
+                
+                // Update album art
+                nowPlayingAlbumArt?.load(currentSong.getAlbumArtUri()) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_music_note)
+                    error(R.drawable.ic_music_note)
+                    transformations(RoundedCornersTransformation(8f))
+                }
+            } else {
+                // No song playing or invalid index
+                nowPlayingTitle?.text = "Not Playing"
+                nowPlayingArtist?.text = "Unknown Artist"
+                nowPlayingAlbumArt?.setImageResource(R.drawable.ic_music_note)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error updating now playing info", e)
         }
     }
     
@@ -280,11 +288,6 @@ class MainActivity : AppCompatActivity() {
     
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_themes -> {
-                val intent = Intent(this, ThemeSelectionActivity::class.java)
-                themeSelectionLauncher.launch(intent)
-                true
-            }
             R.id.action_search -> {
                 showSearchDialog()
                 true

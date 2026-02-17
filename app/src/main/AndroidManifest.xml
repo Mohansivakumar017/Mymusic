@@ -24,12 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ThemeSelectionActivity"
-            android:exported="false"
-            android:label="Select Theme"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/Theme.MyMusic" />
     </application>
 
 </manifest>
