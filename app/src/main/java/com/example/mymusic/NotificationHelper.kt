@@ -70,6 +70,14 @@ class NotificationHelper(
             }
     }
     
+    /**
+     * Force refresh the notification to update song info
+     * Call this when media item changes to ensure notification shows correct info
+     */
+    fun invalidate() {
+        playerNotificationManager?.invalidate()
+    }
+    
     fun release() {
         playerNotificationManager?.setPlayer(null)
         playerNotificationManager = null
