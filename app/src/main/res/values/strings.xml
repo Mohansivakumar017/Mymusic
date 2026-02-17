@@ -9,6 +9,7 @@
     <string name="collapse">Collapse</string>
     <string name="not_playing">Not Playing</string>
     <string name="unknown_artist">Unknown Artist</string>
+    <string name="unknown_title">Unknown Title</string>
     <string name="favorite">Favorite</string>
     <string name="sleep_timer">Sleep Timer</string>
     <string name="playlists">Playlists</string>

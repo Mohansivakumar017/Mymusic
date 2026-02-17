@@ -85,7 +85,8 @@ class NotificationHelper(
     ) : PlayerNotificationManager.MediaDescriptionAdapter {
         
         override fun getCurrentContentTitle(player: Player): CharSequence {
-            return player.currentMediaItem?.mediaMetadata?.title ?: "Unknown Title"
+            return player.currentMediaItem?.mediaMetadata?.title 
+                ?: context.getString(R.string.unknown_title)
         }
         
         override fun createCurrentContentIntent(player: Player): PendingIntent? {
@@ -101,7 +102,8 @@ class NotificationHelper(
         }
         
         override fun getCurrentContentText(player: Player): CharSequence {
-            return player.currentMediaItem?.mediaMetadata?.artist ?: "Unknown Artist"
+            return player.currentMediaItem?.mediaMetadata?.artist 
+                ?: context.getString(R.string.unknown_artist)
         }
         
         override fun getCurrentLargeIcon(

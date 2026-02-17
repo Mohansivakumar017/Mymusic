@@ -717,8 +717,11 @@ class MainActivity : AppCompatActivity() {
     
     private fun updatePlayerControlVisibility() {
         // Keep controller visible as long as songs exist in the library
+        // Hide it only when library is completely empty
         if (songs.isNotEmpty()) {
             binding.playerControlView.visibility = View.VISIBLE
+        } else {
+            hidePlayerControlView()
         }
     }
     
