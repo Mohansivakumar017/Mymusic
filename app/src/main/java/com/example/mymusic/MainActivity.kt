@@ -11,9 +11,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -26,11 +23,15 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.example.mymusic.databinding.ActivityMainBinding
+import com.example.mymusic.databinding.ViewNowPlayingBinding
+import com.example.mymusic.databinding.ViewMiniPlayerBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var nowPlayingBinding: ViewNowPlayingBinding
+    private lateinit var miniPlayerBinding: ViewMiniPlayerBinding
     private lateinit var player: ExoPlayer
     private val songs = mutableListOf<Song>()
     private val filteredSongs = mutableListOf<Song>()
@@ -74,6 +75,11 @@ class MainActivity : AppCompatActivity() {
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // Initialize ViewBinding for now playing screen and mini player
+        nowPlayingBinding = ViewNowPlayingBinding.bind(binding.nowPlayingContainer)
+        val miniPlayerView = binding.miniPlayerContainer.findViewById<View>(R.id.mini_player_root)
+        miniPlayerBinding = ViewMiniPlayerBinding.bind(miniPlayerView)
         
         // Setup toolbar
         setSupportActionBar(binding.toolbar)
@@ -271,7 +277,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupNowPlayingUI() {
         // Setup bottom sheet behavior
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.nowPlayingContainer)
+        bottomSheetBehavior = BottomSheetBehavior.from(nowPlayingBinding.root)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.isHideable = true
         
@@ -281,14 +287,12 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Collapse button
-        val collapseButton = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.btn_collapse)
-        collapseButton.setOnClickListener {
+        nowPlayingBinding.btnCollapse.setOnClickListener {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         }
         
         // Setup playback controls for mini player
-        val miniPlayPause = binding.miniPlayerContainer.findViewById<ImageButton>(R.id.mini_play_pause)
-        miniPlayPause.setOnClickListener {
+        miniPlayerBinding.miniPlayPause.setOnClickListener {
             if (player.isPlaying) {
                 player.pause()
             } else {
@@ -297,8 +301,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Setup playback controls for full player
-        val fullPlayPause = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_play_pause)
-        fullPlayPause.setOnClickListener {
+        nowPlayingBinding.fullPlayPause.setOnClickListener {
             if (player.isPlaying) {
                 player.pause()
             } else {
@@ -306,28 +309,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        val fullPrevious = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_previous)
-        fullPrevious.setOnClickListener {
+        nowPlayingBinding.fullPrevious.setOnClickListener {
             if (player.hasPreviousMediaItem()) {
                 player.seekToPreviousMediaItem()
             }
         }
         
-        val fullNext = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_next)
-        fullNext.setOnClickListener {
+        nowPlayingBinding.fullNext.setOnClickListener {
             if (player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
             }
         }
         
-        val fullShuffle = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_shuffle)
-        fullShuffle.setOnClickListener {
+        nowPlayingBinding.fullShuffle.setOnClickListener {
             player.shuffleModeEnabled = !player.shuffleModeEnabled
             updateShuffleButton()
         }
         
-        val fullRepeat = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_repeat)
-        fullRepeat.setOnClickListener {
+        nowPlayingBinding.fullRepeat.setOnClickListener {
             player.repeatMode = when (player.repeatMode) {
                 Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
                 Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
@@ -337,8 +336,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         // Setup progress bar to control player
-        val progressBar = binding.nowPlayingContainer.findViewById<androidx.media3.ui.DefaultTimeBar>(R.id.full_progress_bar)
-        progressBar.addListener(object : androidx.media3.ui.TimeBar.OnScrubListener {
+        nowPlayingBinding.fullProgressBar.addListener(object : androidx.media3.ui.TimeBar.OnScrubListener {
             override fun onScrubStart(timeBar: androidx.media3.ui.TimeBar, position: Long) {
             }
             
@@ -360,10 +358,10 @@ class MainActivity : AppCompatActivity() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
-                        binding.nowPlayingContainer.visibility = View.GONE
+                        nowPlayingBinding.root.visibility = View.GONE
                     }
                     else -> {
-                        binding.nowPlayingContainer.visibility = View.VISIBLE
+                        nowPlayingBinding.root.visibility = View.VISIBLE
                     }
                 }
             }
@@ -375,21 +373,17 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateProgress() {
-        val progressBar = binding.nowPlayingContainer.findViewById<androidx.media3.ui.DefaultTimeBar>(R.id.full_progress_bar)
-        val currentTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_current_time)
-        val totalTime = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_total_time)
-        
         progressUpdateRunnable = object : Runnable {
             override fun run() {
                 if (::player.isInitialized) {
                     val position = player.currentPosition
                     val duration = player.duration
                     
-                    progressBar.setPosition(position)
-                    progressBar.setDuration(duration)
+                    nowPlayingBinding.fullProgressBar.setPosition(position)
+                    nowPlayingBinding.fullProgressBar.setDuration(duration)
                     
-                    currentTime.text = formatTime(position)
-                    totalTime.text = formatTime(duration)
+                    nowPlayingBinding.fullCurrentTime.text = formatTime(position)
+                    nowPlayingBinding.fullTotalTime.text = formatTime(duration)
                 }
                 progressHandler.postDelayed(this, 500)
             }
@@ -414,28 +408,19 @@ class MainActivity : AppCompatActivity() {
                 binding.miniPlayerContainer.visibility = View.VISIBLE
                 
                 // Update mini player
-                val miniTitle = binding.miniPlayerContainer.findViewById<TextView>(R.id.mini_song_title)
-                val miniArtist = binding.miniPlayerContainer.findViewById<TextView>(R.id.mini_song_artist)
-                val miniAlbumArt = binding.miniPlayerContainer.findViewById<ImageView>(R.id.mini_album_art)
-                
-                miniTitle.text = song.title
-                miniArtist.text = song.artist
-                miniAlbumArt.load(song.getAlbumArtUri()) {
+                miniPlayerBinding.miniSongTitle.text = song.title
+                miniPlayerBinding.miniSongArtist.text = song.artist
+                miniPlayerBinding.miniAlbumArt.load(song.getAlbumArtUri()) {
                     crossfade(true)
                     placeholder(R.drawable.ic_music_note)
                     error(R.drawable.ic_music_note)
                 }
                 
                 // Update full player
-                val fullTitle = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_title)
-                val fullArtist = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_artist)
-                val fullAlbum = binding.nowPlayingContainer.findViewById<TextView>(R.id.full_song_album)
-                val fullAlbumArt = binding.nowPlayingContainer.findViewById<ImageView>(R.id.full_album_art)
-                
-                fullTitle.text = song.title
-                fullArtist.text = song.artist
-                fullAlbum.text = song.album
-                fullAlbumArt.load(song.getAlbumArtUri()) {
+                nowPlayingBinding.fullSongTitle.text = song.title
+                nowPlayingBinding.fullSongArtist.text = song.artist
+                nowPlayingBinding.fullSongAlbum.text = song.album
+                nowPlayingBinding.fullAlbumArt.load(song.getAlbumArtUri()) {
                     crossfade(true)
                     placeholder(R.drawable.ic_music_note)
                     error(R.drawable.ic_music_note)
@@ -450,29 +435,25 @@ class MainActivity : AppCompatActivity() {
     
     private fun updatePlayPauseButtons() {
         val isPlaying = player.isPlaying
-        val miniPlayPause = binding.miniPlayerContainer.findViewById<ImageButton>(R.id.mini_play_pause)
-        val fullPlayPause = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_play_pause)
         
         val iconRes = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        miniPlayPause.setImageResource(iconRes)
-        fullPlayPause.setImageResource(iconRes)
+        miniPlayerBinding.miniPlayPause.setImageResource(iconRes)
+        nowPlayingBinding.fullPlayPause.setImageResource(iconRes)
     }
     
     private fun updateShuffleButton() {
-        val fullShuffle = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_shuffle)
         val colors = ThemeHelper.getThemeColors(currentTheme)
         val tint = if (player.shuffleModeEnabled) colors.primary else colors.onSurface
-        fullShuffle.setColorFilter(tint)
+        nowPlayingBinding.fullShuffle.setColorFilter(tint)
     }
     
     private fun updateRepeatButton() {
-        val fullRepeat = binding.nowPlayingContainer.findViewById<ImageButton>(R.id.full_repeat)
         val colors = ThemeHelper.getThemeColors(currentTheme)
         val tint = when (player.repeatMode) {
             Player.REPEAT_MODE_OFF -> colors.onSurface
             else -> colors.primary
         }
-        fullRepeat.setColorFilter(tint)
+        nowPlayingBinding.fullRepeat.setColorFilter(tint)
     }
     
     private fun applyTheme() {
@@ -488,7 +469,7 @@ class MainActivity : AppCompatActivity() {
         binding.miniPlayerContainer.setBackgroundColor(colors.surface)
         
         // Apply theme to now playing screen
-        binding.nowPlayingContainer.setBackgroundColor(colors.background)
+        nowPlayingBinding.root.setBackgroundColor(colors.background)
         
         // Apply status bar color
         window.statusBarColor = colors.primaryDark
@@ -500,7 +481,7 @@ class MainActivity : AppCompatActivity() {
                 intArrayOf(colors.gradientStart, colors.gradientEnd)
             )
             binding.root.background = gradientDrawable
-            binding.nowPlayingContainer.background = gradientDrawable
+            nowPlayingBinding.root.background = gradientDrawable
         }
         
         // Update button colors
