@@ -7,4 +7,6 @@
     <string name="repeat">Repeat</string>
     <string name="album_art">Album Art</string>
     <string name="collapse">Collapse</string>
+    <string name="not_playing">Not Playing</string>
+    <string name="unknown_artist">Unknown Artist</string>
 </resources>

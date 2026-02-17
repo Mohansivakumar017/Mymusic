@@ -11,6 +11,8 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -22,6 +24,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.mymusic.databinding.ActivityMainBinding
 import com.example.mymusic.databinding.ViewNowPlayingBinding
 import com.example.mymusic.databinding.ViewMiniPlayerBinding
@@ -46,6 +49,11 @@ class MainActivity : AppCompatActivity() {
     private var currentSong: Song? = null
     private val progressHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private lateinit var progressUpdateRunnable: Runnable
+    
+    // Player Control View components
+    private var nowPlayingTitle: TextView? = null
+    private var nowPlayingArtist: TextView? = null
+    private var nowPlayingAlbumArt: ImageView? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -90,10 +98,14 @@ class MainActivity : AppCompatActivity() {
         try {
             player = ExoPlayer.Builder(this).build()
             
+            // Set player to PlayerControlView
+            binding.playerControlView.player = player
+            
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     super.onMediaItemTransition(mediaItem, reason)
                     updateNowPlayingUI()
+                    updateNowPlayingInfo()
                 }
                 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -101,11 +113,24 @@ class MainActivity : AppCompatActivity() {
                     updatePlayPauseButtons()
                 }
             })
+            
+            // Get references to now playing views (use post to ensure layout is inflated)
+            binding.playerControlView.post {
+                nowPlayingTitle = binding.playerControlView.findViewById(R.id.now_playing_title)
+                nowPlayingArtist = binding.playerControlView.findViewById(R.id.now_playing_artist)
+                nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.now_playing_album_art)
+                // Update now playing info after views are initialized
+                updateNowPlayingInfo()
+            }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error initializing player", e)
         }
 
         setupNowPlayingUI()
+        
+        // Hide mini player permanently - using PlayerControlView instead
+        binding.miniPlayerContainer.visibility = View.GONE
+        
         setupRecyclerView()
         setupButtons()
         checkPermissionAndLoad()
@@ -286,6 +311,11 @@ class MainActivity : AppCompatActivity() {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
         
+        // PlayerControlView click to expand (makes it expandable)
+        binding.playerControlView.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+        
         // Collapse button
         nowPlayingBinding.btnCollapse.setOnClickListener {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
@@ -404,19 +434,7 @@ class MainActivity : AppCompatActivity() {
         if (currentIndex >= 0 && currentIndex < songs.size) {
             currentSong = songs[currentIndex]
             currentSong?.let { song ->
-                // Show mini player
-                binding.miniPlayerContainer.visibility = View.VISIBLE
-                
-                // Update mini player
-                miniPlayerBinding.miniSongTitle.text = song.title
-                miniPlayerBinding.miniSongArtist.text = song.artist
-                miniPlayerBinding.miniAlbumArt.load(song.getAlbumArtUri()) {
-                    crossfade(true)
-                    placeholder(R.drawable.ic_music_note)
-                    error(R.drawable.ic_music_note)
-                }
-                
-                // Update full player
+                // Update full player (bottom sheet)
                 nowPlayingBinding.fullSongTitle.text = song.title
                 nowPlayingBinding.fullSongArtist.text = song.artist
                 nowPlayingBinding.fullSongAlbum.text = song.album
@@ -437,7 +455,7 @@ class MainActivity : AppCompatActivity() {
         val isPlaying = player.isPlaying
         
         val iconRes = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        miniPlayerBinding.miniPlayPause.setImageResource(iconRes)
+        // Mini player is hidden - only update full player
         nowPlayingBinding.fullPlayPause.setImageResource(iconRes)
     }
     
@@ -454,6 +472,25 @@ class MainActivity : AppCompatActivity() {
             else -> colors.primary
         }
         nowPlayingBinding.fullRepeat.setColorFilter(tint)
+    }
+    
+    private fun updateNowPlayingInfo() {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex >= 0 && currentIndex < songs.size) {
+            val currentSong = songs[currentIndex]
+            
+            // Make the player control view visible
+            binding.playerControlView.visibility = View.VISIBLE
+            
+            // Update song info
+            nowPlayingTitle?.text = currentSong.title
+            nowPlayingArtist?.text = currentSong.artist
+            nowPlayingAlbumArt?.load(currentSong.getAlbumArtUri()) {
+                placeholder(R.drawable.ic_music_note)
+                error(R.drawable.ic_music_note)
+                transformations(RoundedCornersTransformation(12f))
+            }
+        }
     }
     
     private fun applyTheme() {
