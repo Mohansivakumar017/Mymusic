@@ -63,7 +63,17 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_favorite_border"
             android:contentDescription="@string/favorite"
-            android:layout_marginEnd="8dp" />
+            android:layout_marginEnd="4dp" />
+        
+        <ImageButton
+            android:id="@+id/btn_shuffle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_shuffle"
+            android:contentDescription="@string/shuffle"
+            android:tint="@color/on_surface"
+            android:layout_marginEnd="4dp" />
         
         <ImageButton
             android:id="@id/exo_prev"
@@ -77,7 +87,7 @@
             android:id="@id/exo_play_pause"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_marginHorizontal="16dp"
+            android:layout_marginHorizontal="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/play_pause" />
         
@@ -90,13 +100,23 @@
             android:contentDescription="@string/next" />
         
         <ImageButton
+            android:id="@+id/btn_repeat"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_repeat"
+            android:contentDescription="@string/repeat"
+            android:tint="@color/on_surface"
+            android:layout_marginStart="4dp" />
+        
+        <ImageButton
             android:id="@+id/btn_sleep_timer"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_sleep_timer"
             android:contentDescription="@string/sleep_timer"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="4dp" />
     </LinearLayout>
 
     <!-- Progress bar -->
