@@ -60,10 +60,24 @@ class ThemeManagerTest {
     }
     
     @Test
-    fun themeManager_saveAndRetrieveIosGlassTheme() {
-        themeManager.saveTheme(ThemeType.IOS_GLASS)
+    fun themeManager_saveAndRetrieveYouTubeMusicTheme() {
+        themeManager.saveTheme(ThemeType.YOUTUBE_MUSIC)
         val retrievedTheme = themeManager.getTheme()
-        assertEquals(ThemeType.IOS_GLASS, retrievedTheme)
+        assertEquals(ThemeType.YOUTUBE_MUSIC, retrievedTheme)
+    }
+    
+    @Test
+    fun themeManager_saveAndRetrieveSoundCloudTheme() {
+        themeManager.saveTheme(ThemeType.SOUNDCLOUD)
+        val retrievedTheme = themeManager.getTheme()
+        assertEquals(ThemeType.SOUNDCLOUD, retrievedTheme)
+    }
+    
+    @Test
+    fun themeManager_saveAndRetrieveTidalTheme() {
+        themeManager.saveTheme(ThemeType.TIDAL)
+        val retrievedTheme = themeManager.getTheme()
+        assertEquals(ThemeType.TIDAL, retrievedTheme)
     }
     
     @Test
@@ -82,7 +96,7 @@ class ThemeManagerTest {
         themeManager.saveTheme(ThemeType.SPOTIFY)
         assertEquals(ThemeType.SPOTIFY, themeManager.getTheme())
         
-        themeManager.saveTheme(ThemeType.IOS_GLASS)
-        assertEquals(ThemeType.IOS_GLASS, themeManager.getTheme())
+        themeManager.saveTheme(ThemeType.TIDAL)
+        assertEquals(ThemeType.TIDAL, themeManager.getTheme())
     }
 }

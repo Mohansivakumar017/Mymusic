@@ -13,7 +13,7 @@ class ThemeHelperTest {
         val colors = ThemeHelper.getThemeColors(ThemeType.SPOTIFY)
         
         assertNotNull(colors)
-        assertEquals(0xFF121212.toInt(), colors.background)
+        assertEquals(0xFF000000.toInt(), colors.background)
         assertEquals(0xFF1DB954.toInt(), colors.primary)
     }
     
@@ -22,35 +22,59 @@ class ThemeHelperTest {
         val colors = ThemeHelper.getThemeColors(ThemeType.APPLE_MUSIC)
         
         assertNotNull(colors)
-        assertEquals(0xFFFAFAFA.toInt(), colors.background)
-        assertEquals(0xFFFC3C44.toInt(), colors.primary)
+        assertEquals(0xFFFFFFFF.toInt(), colors.background)
+        assertEquals(0xFFFF2D55.toInt(), colors.primary)
     }
     
     @Test
-    fun getThemeColors_returnsIosGlassColors() {
-        val colors = ThemeHelper.getThemeColors(ThemeType.IOS_GLASS)
+    fun getThemeColors_returnsYouTubeMusicColors() {
+        val colors = ThemeHelper.getThemeColors(ThemeType.YOUTUBE_MUSIC)
         
         assertNotNull(colors)
-        assertEquals(0xFFF2F2F7.toInt(), colors.background)
-        assertEquals(0xFF007AFF.toInt(), colors.primary)
+        assertEquals(0xFF282828.toInt(), colors.background)
+        assertEquals(0xFFFF0000.toInt(), colors.primary)
+    }
+    
+    @Test
+    fun getThemeColors_returnsSoundCloudColors() {
+        val colors = ThemeHelper.getThemeColors(ThemeType.SOUNDCLOUD)
+        
+        assertNotNull(colors)
+        assertEquals(0xFFFFFFFF.toInt(), colors.background)
+        assertEquals(0xFFFF5500.toInt(), colors.primary)
+    }
+    
+    @Test
+    fun getThemeColors_returnsTidalColors() {
+        val colors = ThemeHelper.getThemeColors(ThemeType.TIDAL)
+        
+        assertNotNull(colors)
+        assertEquals(0xFF1A1A1A.toInt(), colors.background)
+        assertEquals(0xFF00FFFF.toInt(), colors.primary)
     }
     
     @Test
     fun getThemeName_returnsCorrectNames() {
         assertEquals("Spotify", ThemeHelper.getThemeName(ThemeType.SPOTIFY))
         assertEquals("Apple Music", ThemeHelper.getThemeName(ThemeType.APPLE_MUSIC))
-        assertEquals("iOS Glass", ThemeHelper.getThemeName(ThemeType.IOS_GLASS))
+        assertEquals("YouTube Music", ThemeHelper.getThemeName(ThemeType.YOUTUBE_MUSIC))
+        assertEquals("SoundCloud", ThemeHelper.getThemeName(ThemeType.SOUNDCLOUD))
+        assertEquals("Tidal", ThemeHelper.getThemeName(ThemeType.TIDAL))
     }
     
     @Test
     fun getThemeDescription_returnsNonEmptyDescriptions() {
         val spotifyDesc = ThemeHelper.getThemeDescription(ThemeType.SPOTIFY)
         val appleMusicDesc = ThemeHelper.getThemeDescription(ThemeType.APPLE_MUSIC)
-        val iosGlassDesc = ThemeHelper.getThemeDescription(ThemeType.IOS_GLASS)
+        val youtubeMusicDesc = ThemeHelper.getThemeDescription(ThemeType.YOUTUBE_MUSIC)
+        val soundCloudDesc = ThemeHelper.getThemeDescription(ThemeType.SOUNDCLOUD)
+        val tidalDesc = ThemeHelper.getThemeDescription(ThemeType.TIDAL)
         
         assertTrue(spotifyDesc.isNotEmpty())
         assertTrue(appleMusicDesc.isNotEmpty())
-        assertTrue(iosGlassDesc.isNotEmpty())
+        assertTrue(youtubeMusicDesc.isNotEmpty())
+        assertTrue(soundCloudDesc.isNotEmpty())
+        assertTrue(tidalDesc.isNotEmpty())
     }
     
     @Test
@@ -60,16 +84,14 @@ class ThemeHelperTest {
     }
     
     @Test
-    fun appleMusicTheme_hasGradientEnabled() {
+    fun appleMusicTheme_hasGradientDisabled() {
         val colors = ThemeHelper.getThemeColors(ThemeType.APPLE_MUSIC)
-        assertTrue(colors.useGradient)
-        assertNotNull(colors.gradientStart)
-        assertNotNull(colors.gradientEnd)
+        assertFalse(colors.useGradient)
     }
     
     @Test
-    fun iosGlassTheme_hasGradientDisabled() {
-        val colors = ThemeHelper.getThemeColors(ThemeType.IOS_GLASS)
+    fun youtubeMusicTheme_hasGradientDisabled() {
+        val colors = ThemeHelper.getThemeColors(ThemeType.YOUTUBE_MUSIC)
         assertFalse(colors.useGradient)
     }
 }
