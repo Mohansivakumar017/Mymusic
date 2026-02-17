@@ -28,7 +28,6 @@ class NotificationHelper(
     companion object {
         private const val NOTIFICATION_ID = 1001
         private const val NOTIFICATION_CHANNEL_ID = "music_playback"
-        private const val NOTIFICATION_CHANNEL_NAME = "Music Playback"
     }
     
     init {
@@ -40,10 +39,10 @@ class NotificationHelper(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                NOTIFICATION_CHANNEL_NAME,
+                context.getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Shows currently playing music"
+                description = context.getString(R.string.notification_channel_description)
                 setShowBadge(false)
                 lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             }

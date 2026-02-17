@@ -135,6 +135,7 @@
             android:textSize="12sp"
             android:textColor="@color/on_surface"
             android:paddingEnd="8dp"
+            android:paddingStart="0dp"
             android:text="0:00" />
         
         <androidx.media3.ui.DefaultTimeBar
@@ -150,6 +151,7 @@
             android:textSize="12sp"
             android:textColor="@color/on_surface"
             android:paddingStart="8dp"
+            android:paddingEnd="0dp"
             android:text="0:00" />
     </LinearLayout>
 </LinearLayout>

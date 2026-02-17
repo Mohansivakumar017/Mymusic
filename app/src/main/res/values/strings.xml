@@ -28,4 +28,6 @@
     <string name="repeat_all">Repeat All</string>
     <string name="repeat_one">Repeat One</string>
     <string name="repeat_off">Repeat Off</string>
+    <string name="notification_channel_name">Music Playback</string>
+    <string name="notification_channel_description">Shows currently playing music</string>
 </resources>
