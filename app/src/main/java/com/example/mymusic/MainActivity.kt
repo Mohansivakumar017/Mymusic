@@ -129,6 +129,9 @@ class MainActivity : AppCompatActivity() {
             
             // Set player to PlayerControlView
             binding.playerControlView.player = player
+            // Disable auto-hide timeout to keep controller always visible
+            binding.playerControlView.setShowTimeoutMs(0)
+            binding.playerControlView.showController()
             
             player.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
