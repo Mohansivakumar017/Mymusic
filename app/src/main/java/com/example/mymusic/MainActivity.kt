@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
     private var nowPlayingAlbumArt: ImageView? = null
     private var favoriteButton: ImageView? = null
     private var sleepTimerButton: ImageView? = null
+    private var miniShuffleButton: ImageView? = null
+    private var miniRepeatButton: ImageView? = null
     
     // MediaSession for notifications and lock screen
     private var mediaSession: MediaSession? = null
@@ -72,6 +74,13 @@ class MainActivity : AppCompatActivity() {
                 loadSongsAndStart()
             } else {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (!isGranted) {
+                Toast.makeText(this, "Notification permission denied. You won't see playback notifications.", Toast.LENGTH_LONG).show()
             }
         }
     
@@ -167,6 +176,8 @@ class MainActivity : AppCompatActivity() {
                 nowPlayingAlbumArt = binding.playerControlView.findViewById(R.id.now_playing_album_art)
                 favoriteButton = binding.playerControlView.findViewById(R.id.btn_favorite)
                 sleepTimerButton = binding.playerControlView.findViewById(R.id.btn_sleep_timer)
+                miniShuffleButton = binding.playerControlView.findViewById(R.id.btn_shuffle)
+                miniRepeatButton = binding.playerControlView.findViewById(R.id.btn_repeat)
                 
                 // Setup favorite button click
                 favoriteButton?.setOnClickListener {
@@ -178,6 +189,32 @@ class MainActivity : AppCompatActivity() {
                 // Setup sleep timer button click
                 sleepTimerButton?.setOnClickListener {
                     showSleepTimerDialog()
+                }
+                
+                // Setup shuffle button click
+                miniShuffleButton?.setOnClickListener {
+                    player.shuffleModeEnabled = !player.shuffleModeEnabled
+                    updateMiniShuffleButton()
+                    updateMainShuffleButton()
+                    updateShuffleButton()
+                    Toast.makeText(this@MainActivity, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
+                }
+                
+                // Setup repeat button click
+                miniRepeatButton?.setOnClickListener {
+                    player.repeatMode = when (player.repeatMode) {
+                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                        else -> Player.REPEAT_MODE_OFF
+                    }
+                    updateMiniRepeatButton()
+                    updateRepeatButton()
+                    val message = when (player.repeatMode) {
+                        Player.REPEAT_MODE_ALL -> "Repeat All"
+                        Player.REPEAT_MODE_ONE -> "Repeat One"
+                        else -> "Repeat Off"
+                    }
+                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                 }
                 
                 // Update now playing info will be called after songs load
@@ -194,6 +231,14 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         setupButtons()
         checkPermissionAndLoad()
+        
+        // Request notification permission for Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                != PackageManager.PERMISSION_GRANTED) {
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
     }
 
     private fun setupRecyclerView() {
@@ -596,6 +641,8 @@ class MainActivity : AppCompatActivity() {
             updatePlayPauseButtons()
             updateShuffleButton()
             updateRepeatButton()
+            updateMiniShuffleButton()
+            updateMiniRepeatButton()
         }
     }
     
@@ -626,6 +673,21 @@ class MainActivity : AppCompatActivity() {
             else -> colors.primary
         }
         nowPlayingBinding.fullRepeat.setColorFilter(tint)
+    }
+    
+    private fun updateMiniShuffleButton() {
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = if (player.shuffleModeEnabled) colors.primary else colors.onSurface
+        miniShuffleButton?.setColorFilter(tint)
+    }
+    
+    private fun updateMiniRepeatButton() {
+        val colors = ThemeHelper.getThemeColors(currentTheme)
+        val tint = when (player.repeatMode) {
+            Player.REPEAT_MODE_OFF -> colors.onSurface
+            else -> colors.primary
+        }
+        miniRepeatButton?.setColorFilter(tint)
     }
     
     private fun hidePlayerControlView() {
