@@ -141,14 +141,20 @@ class MainActivity : AppCompatActivity() {
                     // Use the actual MediaItem URI to find the song instead of relying on index
                     val currentUri = mediaItem?.localConfiguration?.uri?.path
                     if (currentUri != null) {
-                        // Find the song by matching its path to avoid index mismatches
-                        val song = filteredSongs.find { it.path == currentUri }
+                        // First try to find in filteredSongs for efficiency
+                        var song = filteredSongs.find { it.path == currentUri }
+                        if (song == null) {
+                            // Not in filtered list, try full songs list
+                            // This handles the case where we're searching and the playing song is filtered out
+                            song = songs.find { it.path == currentUri }
+                        }
+                        
                         if (song != null) {
                             currentPlayingSong = song
                             updateNowPlayingInfoImmediate(song)
                         } else {
-                            // Song not in filtered list - could have been filtered out
-                            Log.w("MainActivity", "Playing song not found in filtered list")
+                            // Song not found at all
+                            Log.w("MainActivity", "Playing song not found in song library")
                             currentPlayingSong = null
                             // Controller stays visible if songs are available
                         }
@@ -199,6 +205,12 @@ class MainActivity : AppCompatActivity() {
                     updateMiniShuffleButton()
                     updateMainShuffleButton()
                     updateShuffleButton()
+                    
+                    // If shuffle mode is enabled, pick a random song
+                    if (player.shuffleModeEnabled) {
+                        playRandomSongFromFiltered()
+                    }
+                    
                     val message = if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off)
                     Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                 }
@@ -278,8 +290,11 @@ class MainActivity : AppCompatActivity() {
                 // Update visual state
                 updateMainShuffleButton()
                 
-                // If no song is playing, start from first song
-                if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
+                // If shuffle mode is enabled, pick a random song
+                if (player.shuffleModeEnabled) {
+                    playRandomSongFromFiltered()
+                } else if (player.mediaItemCount == 0 || player.currentMediaItemIndex == -1) {
+                    // If shuffle is disabled and no song is playing, start from first song
                     player.seekTo(0, 0)
                     player.play()
                 }
@@ -435,6 +450,9 @@ class MainActivity : AppCompatActivity() {
             player.currentMediaItem?.localConfiguration?.uri?.path
         } else null
         
+        // Stop current playback before updating queue to prevent overlap
+        player.stop()
+        
         // Update player with filtered songs
         val mediaItems = filteredSongs.map { it.toMediaItem() }
         player.setMediaItems(mediaItems)
@@ -468,7 +486,13 @@ class MainActivity : AppCompatActivity() {
         if (index !in filteredSongs.indices) return
         
         try {
-            player.seekTo(index, 0)
+            // Stop current playback before updating queue to prevent overlap
+            player.stop()
+            
+            // Update player queue to match current filtered songs
+            val mediaItems = filteredSongs.map { it.toMediaItem() }
+            player.setMediaItems(mediaItems, index, 0)
+            player.prepare()
             player.play()
             
             // Show the player control view - onMediaItemTransition will update the info
@@ -567,7 +591,13 @@ class MainActivity : AppCompatActivity() {
         nowPlayingBinding.fullShuffle.setOnClickListener {
             player.shuffleModeEnabled = !player.shuffleModeEnabled
             updateShuffleButton()
-            Toast.makeText(this, if (player.shuffleModeEnabled) "Shuffle On" else "Shuffle Off", Toast.LENGTH_SHORT).show()
+            
+            // If shuffle mode is enabled, pick a random song
+            if (player.shuffleModeEnabled) {
+                playRandomSongFromFiltered()
+            }
+            
+            Toast.makeText(this, if (player.shuffleModeEnabled) getString(R.string.shuffle_on) else getString(R.string.shuffle_off), Toast.LENGTH_SHORT).show()
         }
         
         nowPlayingBinding.fullRepeat.setOnClickListener {
@@ -712,6 +742,19 @@ class MainActivity : AppCompatActivity() {
             else -> colors.primary
         }
         miniRepeatButton?.setColorFilter(tint)
+    }
+    
+    private fun playRandomSongFromFiltered() {
+        if (filteredSongs.isEmpty()) return
+        
+        // Stop current playback before updating queue to prevent overlap
+        player.stop()
+        
+        val mediaItems = filteredSongs.map { it.toMediaItem() }
+        val randomIndex = (0 until filteredSongs.size).random()
+        player.setMediaItems(mediaItems, randomIndex, 0)
+        player.prepare()
+        player.play()
     }
     
     private fun hidePlayerControlView() {
@@ -902,7 +945,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         adapter.notifyDataSetChanged()
-        updatePlayerWithFilteredSongs()
+        // Don't update player - preserve current playback
         Toast.makeText(this, "Found ${filteredSongs.size} songs", Toast.LENGTH_SHORT).show()
     }
     
@@ -911,7 +954,7 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.clear()
         filteredSongs.addAll(songs)
         adapter.notifyDataSetChanged()
-        updatePlayerWithFilteredSongs()
+        // Don't update player - preserve current playback
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
     }
     
@@ -969,6 +1012,9 @@ class MainActivity : AppCompatActivity() {
         
         applySorting()
         
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
+        
         supportActionBar?.title = getString(R.string.favorites)
         Toast.makeText(this, "Showing ${filteredSongs.size} favorite songs", Toast.LENGTH_SHORT).show()
     }
@@ -982,6 +1028,9 @@ class MainActivity : AppCompatActivity() {
         filteredSongs.addAll(songs)
         
         applySorting()
+        
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
         
         supportActionBar?.title = getString(R.string.app_name)
         Toast.makeText(this, "Showing all songs", Toast.LENGTH_SHORT).show()
@@ -1093,9 +1142,6 @@ class MainActivity : AppCompatActivity() {
         currentPlaylistId = playlist.id
         isSearching = false
         
-        // Get current playing song before changing filtered list
-        val currentSongPath = player.currentMediaItem?.localConfiguration?.uri?.path
-        
         filteredSongs.clear()
         filteredSongs.addAll(songs.filter { playlist.songIds.contains(it.id) })
         
@@ -1103,14 +1149,8 @@ class MainActivity : AppCompatActivity() {
         performSorting()
         adapter.notifyDataSetChanged()
         
-        // Only update player if current song is not in the new playlist
-        // This preserves playback when switching playlists
-        val currentSongInPlaylist = currentSongPath != null && 
-                                    filteredSongs.any { it.path == currentSongPath }
-        if (!currentSongInPlaylist) {
-            // Current song is not in this playlist, update player
-            updatePlayerWithFilteredSongs()
-        }
+        // Always update player queue to keep it in sync with UI
+        updatePlayerWithFilteredSongs()
         
         supportActionBar?.title = playlist.name
         Toast.makeText(this, getString(R.string.showing_songs, filteredSongs.size), Toast.LENGTH_SHORT).show()
