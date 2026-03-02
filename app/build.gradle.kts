@@ -67,6 +67,7 @@ dependencies {
     implementation("androidx.media:media:1.7.0")
     implementation(libs.google.material)
     implementation(libs.coil.base)
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Unit Testing
     testImplementation(libs.junit)
