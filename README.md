@@ -2,6 +2,13 @@
 
 A beautiful Android music player with multiple theme options inspired by popular music apps.
 
+## Download APK
+
+To download the app APK, click this link:
+
+- Latest version: https://github.com/Mohansivakumar017/Mymusic/releases/latest
+- All releases: https://github.com/Mohansivakumar017/Mymusic/releases
+
 ## Features ✨
 
 ### 🎨 Multiple Themes
